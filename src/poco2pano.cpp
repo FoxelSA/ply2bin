@@ -195,7 +195,7 @@ int main(int argc, char** argv) {
                 sensorData  sd = vec_sensorData[j];
 
                 // compute depth related to camera j
-                lf_Real_t  X_C[3] = { pos[0] - sd.C[0],  pos[1] - sd.C[1], pos[2] - sd.C[2]};
+                lf_Real_t  X_C[3] = { X[0] - sd.C[0],  X[1] - sd.C[1], X[2] -sd.C[2]};
                 lf_Real_t depth = sd.R[6] * X_C[0] + sd.R[7] * X_C[1] + sd.R[8] * X_C[2];
 
                 // initialize projected pixels
