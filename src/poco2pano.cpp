@@ -43,6 +43,8 @@
 #include "types.hpp"
 #include "poco2pano.hpp"
 
+using namespace cv;
+
 int main(int argc, char** argv) {
 
     /* Usage branch */
@@ -82,16 +84,19 @@ int main(int argc, char** argv) {
           return EXIT_FAILURE;
         }
 
-        // query panorama width and height
-        lf_Size_t  lf_imageFullWidth  = lf_query_ImageFullWidth ( 0, & lfDesc );
-        lf_Size_t  lf_imageFullHeight = lf_query_ImageFullLength( 0, & lfDesc );
-
         // now extract calibration information related to each module
         std::vector < sensorData > vec_sensorData;
 
         for( lf_Size_t sensor_index = 0 ; sensor_index < lfChannels ; ++sensor_index )
         {
           sensorData  sD;
+
+          // query panorama width and height
+          sD.lfImageFullWidth  = lf_query_ImageFullWidth ( sensor_index, & lfDesc );
+          sD.lfImageFullHeight = lf_query_ImageFullLength( sensor_index, & lfDesc );
+
+          sD.lfpixelCorrectionWidth  = lf_query_pixelCorrectionWidth (sensor_index, &lfDesc);
+          sD.lfpixelCorrectionHeight = lf_query_pixelCorrectionHeight(sensor_index, &lfDesc);
 
           /* Query position of eqr tile in panorama */
           sD.lfXPosition = lf_query_XPosition ( sensor_index, & lfDesc );
@@ -172,6 +177,11 @@ int main(int argc, char** argv) {
 
         printf( "data loaded \n");
 
+        // load image
+        std::string panoPath = "/home/sflotron/result_1412954000_384026.tif";
+        Mat pano_img;
+        pano_img = imread(panoPath.c_str(), CV_LOAD_IMAGE_COLOR );
+
         // project point cloud into panorama
         for( size_t i = 0 ; i < pointAndColor.size(); ++i )
         {
@@ -205,11 +215,48 @@ int main(int argc, char** argv) {
 
                     if ( ug > 0.0 && ug < sd.lfWidth && vg > 0.0 && vg < sd.lfHeight)
                     {
-                         // retreive pixel in panorama 
+                         // retreive pixel in panorama
+                         lf_Real_t  up = 0.0;
+                         lf_Real_t  vp = 0.0;
+
+                         // apply inverse gnomonic projection
+                         lg_gtt_elphel_point(
+                            &up,
+                            &vp,
+                            ug,
+                            vg,
+                            sd.lfpx0,
+                            sd.lfpy0,
+                            sd.lfImageFullWidth,
+                            sd.lfImageFullHeight,
+                            sd.lfXPosition,
+                            sd.lfYPosition,
+                            sd.lfRoll,
+                            sd.lfAzimuth,
+                            sd.lfElevation,
+                            sd.lfHeading,
+                            sd.lfPixelSize,
+                            sd.lfFocalLength
+                        );
+
+                        if( up > 0 && up < sd.lfImageFullWidth && vp > 0 && vp < sd.lfImageFullHeight )
+                        {
+                            // export point on stiched panorama
+                            Vec3b color = pano_img.at<Vec3b>(Point(up + sd.lfXPosition, vp + sd.lfYPosition));
+                            color.val[0] =  0;
+                            color.val[1] =  0;
+                            color.val[2] =  255;
+
+                            // set pixel
+                            pano_img.at<Vec3b>(Point(up + sd.lfXPosition , vp + sd.lfYPosition)) = color;
+                        }
                     }
                 }
            }
         }
+
+        imwrite( "./pointcloud_on_pano.tif", pano_img);
+
 
 #if 0
         // create export stream

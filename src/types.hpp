@@ -55,6 +55,10 @@ struct sensorData
     lf_Size_t   lfChannels  = 0;
     lf_Size_t   lfXPosition = 0;
     lf_Size_t   lfYPosition = 0;
+    lf_Size_t   lfImageFullWidth  = 0;
+    lf_Size_t   lfImageFullHeight = 0;
+    lf_Size_t   lfpixelCorrectionWidth  = 0;
+    lf_Size_t   lfpixelCorrectionHeight = 0;
 
     lf_Real_t   lfFocalLength = 0.0;
     lf_Real_t   lfPixelSize   = 0.0;
