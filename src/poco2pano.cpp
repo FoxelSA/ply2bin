@@ -125,6 +125,9 @@ int main(int argc, char** argv) {
           // compute optical center in camera coordinate and store it
           getOpticalCenter ( &sD.C[0] , sD.lfRadius, sD.lfCheight, sD.lfAzimuth, sD.R, sD.lfEntrance );
 
+          // compute projection matrix
+          computeProjMat ( &sD.P[0] , sD.lfFocalLength / sD.lfPixelSize, sD.lfpx0, sD.lfpy0, sD.R, sD.C);
+
           vec_sensorData.push_back(sD);
         }
 
