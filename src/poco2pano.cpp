@@ -38,6 +38,8 @@
 
 #include <stdlib.h>
 #include <cmath>
+#include <cstring>
+#include "types.hpp"
 #include "poco2pano.hpp"
 
 int main(int argc, char** argv) {
@@ -54,6 +56,73 @@ int main(int argc, char** argv) {
         return 0;
 
     } else {
+
+        /* Key/value-file descriptor */
+        lf_Descriptor_t lfDesc;
+        lf_Size_t       lfChannels=0;
+
+        /* Creation and verification of the descriptor */
+        std::string sMountPoint = "/data/";
+        char *c_data = new char[sMountPoint.length() + 1];
+        std::strcpy(c_data, sMountPoint.c_str());
+
+        std::string smacAddress = "00-0E-64-08-1C-D2";
+        char *c_mac = new char[smacAddress.length() + 1];
+        std::strcpy(c_mac, smacAddress.c_str());
+
+        if ( lf_parse( (unsigned char*)c_mac, (unsigned char*)c_data, & lfDesc ) == LF_TRUE ) {
+
+          /* Query number of camera channels */
+          lfChannels = lf_query_channels( & lfDesc );
+        }
+        else
+        {
+          std::cerr << " Could not read calibration data. " << std::endl;
+          return EXIT_FAILURE;
+        }
+
+        // now extract calibration information related to each module
+        std::vector < sensorData > vec_sensorData;
+
+        for( lf_Size_t sensor_index = 0 ; sensor_index < lfChannels ; ++sensor_index )
+        {
+          sensorData  sD;
+
+          /* Query number width and height of sensor image */
+          sD.lfWidth  = lf_query_pixelCorrectionWidth ( sensor_index, & lfDesc );
+          sD.lfHeight = lf_query_pixelCorrectionHeight( sensor_index, & lfDesc );
+
+          /* Query focal length of camera sensor index */
+          sD.lfFocalLength = lf_query_focalLength( sensor_index , & lfDesc );
+          sD.lfPixelSize   = lf_query_pixelSize  ( sensor_index , & lfDesc );
+
+          /* Query angles used for gnomonic rotation */
+          sD.lfAzimuth    = lf_query_azimuth    ( sensor_index , & lfDesc );
+          sD.lfHeading    = lf_query_heading    ( sensor_index , & lfDesc );
+          sD.lfElevation  = lf_query_elevation  ( sensor_index , & lfDesc );
+          sD.lfRoll       = lf_query_roll       ( sensor_index , & lfDesc );
+
+          // compute rotation and store it.
+          computeRotationEl ( &sD.R[0] , sD.lfAzimuth , sD.lfHeading, sD.lfElevation, sD.lfRoll );
+
+          /* Query principal point */
+          sD.lfpx0 = lf_query_px0 ( sensor_index , & lfDesc );
+          sD.lfpy0 = lf_query_py0 ( sensor_index , & lfDesc );
+
+          /* Query information related to entrance pupil center */
+          sD.lfRadius   = lf_query_radius               ( sensor_index , & lfDesc );
+          sD.lfCheight  = lf_query_height               ( sensor_index , & lfDesc );
+          sD.lfEntrance = lf_query_entrancePupilForward ( sensor_index , & lfDesc );
+
+          // compute optical center in camera coordinate and store it
+          getOpticalCenter ( &sD.C[0] , sD.lfRadius, sD.lfCheight, sD.lfAzimuth, sD.R, sD.lfEntrance );
+
+          vec_sensorData.push_back(sD);
+        }
+
+        /* Release descriptor */
+        lf_release( & lfDesc );
+
 
         // set some output parameters
          cout.setf(ios::left);
