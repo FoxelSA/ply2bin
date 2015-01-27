@@ -39,6 +39,7 @@
 #include <stdlib.h>
 #include <cmath>
 #include <cstring>
+#include <gnomonic-all.h>
 #include "types.hpp"
 #include "poco2pano.hpp"
 
@@ -134,10 +135,7 @@ int main(int argc, char** argv) {
         /* Release descriptor */
         lf_release( & lfDesc );
 
-
-        // set some output parameters
-         cout.setf(ios::left);
-         cout.setf(ios::scientific);
+        printf( "calibration data loaded \n");
 
         // load output and eliminate false correspondences using fundamental matrix condition
         ifstream data(argv[1]);
@@ -172,57 +170,48 @@ int main(int argc, char** argv) {
         // close stream
         data.close();
 
-        //extract camera position
-        int nPoint = (int) pointAndColor.size();
-        std::vector< std::vector <double> > camPos;
+        printf( "data loaded \n");
 
-        for(int j = 0; j < nPoint ; ++j)
-        {
-          const unsigned int r =  pointAndColor[j].second[0];
-          const unsigned int g =  pointAndColor[j].second[1];
-          const unsigned int b =  pointAndColor[j].second[2];
-
-          // if a point has camera color code, add it to camera list
-          if( r == 0 && g == 255 && b == 0 )
-          {
-            const double x = pointAndColor[j].first[0];
-            const double y = pointAndColor[j].first[1];
-            const double z = pointAndColor[j].first[2];
-
-            std::vector<double> temp;
-            temp.push_back(x); temp.push_back(y); temp.push_back(z);
-            camPos.push_back(temp);
-          }
-        }
-
-        // compute number of kept point
-        std::vector<size_t> vec_inliers;
-        int i = 0;
-        for( i = 0; i < nPoint ; ++i)
+        // project point cloud into panorama
+        for( size_t i = 0 ; i < pointAndColor.size(); ++i )
         {
            // retreive point information
-           vector <double> position = pointAndColor[i].first;
-           vector <unsigned int> color    = pointAndColor[i].second;
+           vector <double> pos   = pointAndColor[i].first;
+           const lf_Real_t  X[4] = {pos[0], pos[1], pos[2], 1.0 };
 
-           // compute minimal distance to a camera
-           double minDist = 1.0e10;
-
-           for(int j=0; j < (int) camPos.size() ; ++j )
+           for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j )
            {
-               double xd = position[0] - camPos[j][0];
-               double yd = position[1] - camPos[j][1];
-               double zd = position[2] - camPos[j][2];
+                // extract sensor information
+                sensorData  sd = vec_sensorData[j];
 
-               double distance = sqrt(xd * xd + yd * yd + zd * zd);
-               if( distance < minDist )
-                 minDist = distance;
+                // compute depth related to camera j
+                lf_Real_t  X_C[3] = { pos[0] - sd.C[0],  pos[1] - sd.C[1], pos[2] - sd.C[2]};
+                lf_Real_t depth = sd.R[6] * X_C[0] + sd.R[7] * X_C[1] + sd.R[8] * X_C[2];
+
+                // initialize projected pixels
+                lf_Real_t  ug = -1.0;
+                lf_Real_t  vg = -1.0;
+
+                //  if depth > 0, point could be seen from camera j
+                if( depth > 1.0e-6 )
+                {
+                    double  PX0 = sd.P[0] * X[0] + sd.P[1] * X[1] + sd.P[2 ] * X[2] + sd.P[3 ] * X[3];
+                    double  PX1 = sd.P[4] * X[0] + sd.P[5] * X[1] + sd.P[6 ] * X[2] + sd.P[7 ] * X[3];
+                    double  PX2 = sd.P[8] * X[0] + sd.P[9] * X[1] + sd.P[10] * X[2] + sd.P[11] * X[3];
+
+                    // update projected pixel value
+                    ug = PX0 / PX2 ;
+                    vg = PX1 / PX2 ;
+
+                    if ( ug > 0.0 && ug < sd.lfWidth && vg > 0.0 && vg < sd.lfHeight)
+                    {
+                         // retreive pixel in panorama 
+                    }
+                }
            }
-
-           // keep only point whose mininal distance to camera is less than 100 meters
-           if( minDist < 10000 )
-             vec_inliers.push_back(i);
         }
 
+#if 0
         // create export stream
         std::string  outpath(argv[2]);
 
@@ -258,6 +247,7 @@ int main(int argc, char** argv) {
 
        // close stream
        fclose(out);
+#endif
 
        return 0;
     }
