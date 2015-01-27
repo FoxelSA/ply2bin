@@ -1,11 +1,12 @@
 
-## poco2pano <br /> Point cloud exportation to Panorama
+## poco2pano <br /> Point cloud exportation to freepano
 
-Given a metric point cloud in ply format, this software export it on the eyesis panorama
+Given an openMVG point cloud in ply format obtained with eyesis4pi rig structure,
+this software export it on the associtated EQR panoramas.
 
 ### Documentation
 
-More information can be found on the [wiki](https://github.com/baritone/pcfil/wiki).
+More information can be found on the [wiki](https://github.com/baritone/poco2pano/wiki).
 
 ### Copyright
 
