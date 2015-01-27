@@ -52,7 +52,7 @@ set(POCOTOPANO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 # ==============================================================================
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR
     "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-    set(warnings "-Wall -Wextra -Werror")
+    set(warnings "-Wall -Wextra")
     set(cxx_flags "-std=c++11")
 endif()
 

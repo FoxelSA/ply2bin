@@ -81,12 +81,20 @@ int main(int argc, char** argv) {
           return EXIT_FAILURE;
         }
 
+        // query panorama width and height
+        lf_Size_t  lf_imageFullWidth  = lf_query_ImageFullWidth ( 0, & lfDesc );
+        lf_Size_t  lf_imageFullHeight = lf_query_ImageFullLength( 0, & lfDesc );
+
         // now extract calibration information related to each module
         std::vector < sensorData > vec_sensorData;
 
         for( lf_Size_t sensor_index = 0 ; sensor_index < lfChannels ; ++sensor_index )
         {
           sensorData  sD;
+
+          /* Query position of eqr tile in panorama */
+          sD.lfXPosition = lf_query_XPosition ( sensor_index, & lfDesc );
+          sD.lfYPosition = lf_query_YPosition ( sensor_index, & lfDesc );
 
           /* Query number width and height of sensor image */
           sD.lfWidth  = lf_query_pixelCorrectionWidth ( sensor_index, & lfDesc );
