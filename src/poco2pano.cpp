@@ -248,7 +248,7 @@ int main(int argc, char** argv) {
                 lf_Real_t  vg = -1.0;
 
                 //  if depth > 0, point could be seen from camera j
-                if( depth > 1.0e-6 )
+                if( depth > 1.0e-6  && sqrt(X_C[0] * X_C[0] + X_C[1]*X_C[1] + X_C[2]*X_C[2]) < 100.0 )
                 {
                     double  PX0 = sd.P[0] * X[0] + sd.P[1] * X[1] + sd.P[2 ] * X[2] + sd.P[3 ] * X[3];
                     double  PX1 = sd.P[4] * X[0] + sd.P[5] * X[1] + sd.P[6 ] * X[2] + sd.P[7 ] * X[3];
