@@ -151,5 +151,50 @@ bool  loadCalibrationData( std::vector < sensorData > & vec_sensorData )
     return true;
   };
 
+  /*********************************************************************
+  *  load point cloud
+  *
+  **********************************************************************/
+
+bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, vector<unsigned int> > > & pointAndColor )
+{
+  // create file stream
+  ifstream data( fileName );
+
+  //check if file exist for reading
+  if( data == NULL){
+    fprintf(stderr, "couldn't open point cloud file %s \n ", fileName);
+    return false;
+  }
+
+  // read data files
+  double x,y,z;
+  unsigned int r, g, b;
+
+  // skip header and go to line (first 10 lines of file)
+  for(int k=0; k < 10 ; ++k)
+    data.ignore(10000,'\n');
+
+  while (data >> x >> y >> z >> r >> g >> b){
+      // store point information in big vector
+      vector <double>  position;
+      vector <unsigned int> color;
+
+      position.push_back(x); position.push_back(y); position.push_back(z);
+      color.push_back(r);    color.push_back(g);    color.push_back(b);
+
+      pointAndColor.push_back(std::make_pair(position, color));
+   }
+
+  // close stream
+  data.close();
+
+  if( pointAndColor.size () > 0 )
+    return true ;
+  else
+    return false ;
+
+};
+
 
 #endif /* POCOTOPANO_HPP_ */

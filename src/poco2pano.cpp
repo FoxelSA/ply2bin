@@ -65,44 +65,29 @@ int main(int argc, char** argv) {
         bool bLoadedCalibData = loadCalibrationData( vec_sensorData);
 
         if( !bLoadedCalibData )
+        {
+          std::cerr << " Could not read calibration data" << std::endl;
           return EXIT_FAILURE;
-
-        printf( "calibration data loaded \n");
-
-        // load output and eliminate false correspondences using fundamental matrix condition
-        ifstream data(argv[1]);
-        vector< std::pair < vector <double >, vector<unsigned int> > > pointAndColor;
-
-        //check if file exist for reading
-        if( data == NULL){
-            fprintf(stderr, "couldn't open point cloud file %s \n ", argv[4]);
-            return -1;
-          }
-
-        // read data files
-        double x,y,z;
-        unsigned int r, g, b;
-
-        // skip header and go to line (first 10 lines of file)
-        for(int k=0; k < 10 ; ++k)
-          data.ignore(10000,'\n');
-
-        while (data >> x >> y >> z >> r >> g >> b){
-          // store point information in big vector
-          vector <double>  position;
-          vector <unsigned int> color;
-
-          position.push_back(x); position.push_back(y); position.push_back(z);
-          color.push_back(r);    color.push_back(g);    color.push_back(b);
-
-          pointAndColor.push_back(std::make_pair(position, color));
-
+        }
+        else
+        {
+          std::cout << "Loaded calibration information\n\n" << std::endl;
         }
 
-        // close stream
-        data.close();
+        // load output and eliminate false correspondences using fundamental matrix condition
+        vector< std::pair < vector <double >, vector<unsigned int> > > pointAndColor;
 
-        printf( "data loaded \n");
+        bool  bLoadPC = loadPointCloud( argv[1], pointAndColor);
+
+        if( !bLoadPC )
+        {
+          std::cerr << "Could not load point cloud " << std::endl;
+          return  EXIT_FAILURE;
+        }
+        else
+        {
+          std::cout << "Loaded point cloud \n\n" << std::endl;
+        }
 
         // load panorama pose
         std::string  posePath = "/home/sflotron/foxel/test/muref_crown_25pano/10.txt";
@@ -113,11 +98,12 @@ int main(int argc, char** argv) {
 
         //check if file exist for reading
         if( pose == NULL){
-          fprintf(stderr, "couldn't open point cloud file %s \n ", posePath.c_str());
+          fprintf(stderr, "couldn't open pose file %s \n ", posePath.c_str());
           return -1;
         }
 
         // read pose information
+        double x,y,z;
         while (pose >> x >> y >> z){
             // store point information in big vector
             vector <double>  position;
