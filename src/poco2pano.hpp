@@ -55,7 +55,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 using namespace std;
 using namespace cv;
@@ -162,7 +162,7 @@ bool projectPointCloud (
           if( up < 0.0 )
             up += sd.lfImageFullWidth;
 
-            if( up > 5 && up < sd.lfImageFullWidth-5 && vp > 5 && vp < sd.lfImageFullHeight-5 )
+            if( up > 0 && up < sd.lfImageFullWidth && vp > 0 && vp < sd.lfImageFullHeight )
             {
 
 #if DEBUG
