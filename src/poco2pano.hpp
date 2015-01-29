@@ -192,9 +192,52 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
   if( pointAndColor.size () > 0 )
     return true ;
   else
+  {
+    std::cerr << "Point cloud is empty " << std::endl;
     return false ;
+  }
 
 };
+
+/*********************************************************************
+*  load rig pose
+*
+**********************************************************************/
+
+bool  loadRigPose ( const char * fileName, vector< std::vector<double> > rigPose )
+{
+
+  // load pose
+  ifstream pose(fileName);
+
+  //check if file exist for reading
+  if( pose == NULL){
+    fprintf(stderr, "couldn't open pose file %s \n ", fileName);
+    return false;
+  }
+
+  // read pose information
+  double x,y,z;
+  while (pose >> x >> y >> z){
+    // store point information in big vector
+    vector <double>  position;
+
+    position.push_back(x); position.push_back(y); position.push_back(z);
+    rigPose.push_back(position);
+  }
+
+  //close stream
+  pose.close();
+
+  if( rigPose.size() > 0 )
+    return true;
+  else
+  {
+    std::cerr << "Pose file is empty \n" << std::endl;
+    return false;
+  }
+
+}
 
 
 #endif /* POCOTOPANO_HPP_ */

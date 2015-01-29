@@ -59,9 +59,8 @@ int main(int argc, char** argv) {
         return 0;
 
     } else {
-        // now extract calibration information related to each module
+        /// now extract calibration information related to each module ///
         std::vector < sensorData > vec_sensorData;
-
         bool bLoadedCalibData = loadCalibrationData( vec_sensorData);
 
         if( !bLoadedCalibData )
@@ -74,14 +73,12 @@ int main(int argc, char** argv) {
           std::cout << "Loaded calibration information\n\n" << std::endl;
         }
 
-        // load output and eliminate false correspondences using fundamental matrix condition
+        /// load point cloud ///
         vector< std::pair < vector <double >, vector<unsigned int> > > pointAndColor;
-
         bool  bLoadPC = loadPointCloud( argv[1], pointAndColor);
 
         if( !bLoadPC )
         {
-          std::cerr << "Could not load point cloud " << std::endl;
           return  EXIT_FAILURE;
         }
         else
@@ -89,27 +86,19 @@ int main(int argc, char** argv) {
           std::cout << "Loaded point cloud \n\n" << std::endl;
         }
 
-        // load panorama pose
+        /// load panorama pose ///
         std::string  posePath = "/home/sflotron/foxel/test/muref_crown_25pano/10.txt";
-
-        // load output and eliminate false correspondences using fundamental matrix condition
-        ifstream pose(posePath.c_str());
         vector< std::vector<double> > rigPose;
 
-        //check if file exist for reading
-        if( pose == NULL){
-          fprintf(stderr, "couldn't open pose file %s \n ", posePath.c_str());
-          return -1;
+        bool bLoadPose = loadRigPose ( posePath.c_str(), rigPose);
+
+        if( !bLoadPose )
+        {
+          return EXIT_FAILURE;
         }
-
-        // read pose information
-        double x,y,z;
-        while (pose >> x >> y >> z){
-            // store point information in big vector
-            vector <double>  position;
-
-            position.push_back(x); position.push_back(y); position.push_back(z);
-            rigPose.push_back(position);
+        else
+        {
+          std::cout << "Loaded panorama pose \n\n" << std::endl;
         }
 
         // extract rig rotation and center
@@ -120,8 +109,6 @@ int main(int argc, char** argv) {
         };
 
         vector <double> cRig = rigPose[3];
-
-        cout << "pose extracted " << endl;
 
         // load image
         std::string panoPath = "/home/sflotron/result_1404374551_319830.tif";
