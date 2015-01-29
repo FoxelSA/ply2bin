@@ -59,40 +59,13 @@ int main(int argc, char** argv) {
         return 0;
 
     } else {
-
-        /* Key/value-file descriptor */
-        lf_Descriptor_t lfDesc;
-        lf_Size_t       lfChannels=0;
-
-        /* Creation and verification of the descriptor */
-        std::string sMountPoint = "/data/";
-        char *c_data = new char[sMountPoint.length() + 1];
-        std::strcpy(c_data, sMountPoint.c_str());
-
-        std::string smacAddress = "00-0E-64-08-1C-D2";
-        char *c_mac = new char[smacAddress.length() + 1];
-        std::strcpy(c_mac, smacAddress.c_str());
-
-        // check input data validity
-        if ( lf_parse( (unsigned char*)c_mac, (unsigned char*)c_data, & lfDesc ) == LF_TRUE ) {
-
-          /* Query number of camera channels */
-          lfChannels = lf_query_channels( & lfDesc );
-        }
-        else
-        {
-          std::cerr << " Could not read calibration data. " << std::endl;
-          return EXIT_FAILURE;
-        }
-
         // now extract calibration information related to each module
         std::vector < sensorData > vec_sensorData;
 
-        loadCalibrationData( vec_sensorData, lfDesc );
-        lfChannels = lf_query_channels( & lfDesc );
+        bool bLoadedCalibData = loadCalibrationData( vec_sensorData);
 
-        /* Release descriptor */
-        lf_release( & lfDesc );
+        if( !bLoadedCalibData )
+          return EXIT_FAILURE;
 
         printf( "calibration data loaded \n");
 
@@ -188,7 +161,7 @@ int main(int argc, char** argv) {
 
            const lf_Real_t  X[4] = { xrig, yrig, zrig, 1.0 };
 
-           for( size_t j = 0; j < lfChannels-2 ; ++j )
+           for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j )
            {
                 // extract sensor information
                 sensorData  sd = vec_sensorData[j];

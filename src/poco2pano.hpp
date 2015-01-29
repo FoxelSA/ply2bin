@@ -60,10 +60,40 @@
 using namespace std;
 
 
-void  loadCalibrationData( std::vector < sensorData > & vec_sensorData,
-        lf_Descriptor_t lfDesc )  // descriptor
-  {
-    const lf_Size_t lfChannels = lf_query_channels( & lfDesc );
+/*********************************************************************
+*  load calibration data related to elphel cameras
+*
+**********************************************************************/
+
+bool  loadCalibrationData( std::vector < sensorData > & vec_sensorData )
+{
+
+    /* Key/value-file descriptor */
+    lf_Descriptor_t lfDesc;
+    lf_Size_t       lfChannels=0;
+
+    /* Creation and verification of the descriptor */
+    std::string sMountPoint = "/data/";
+    char *c_data = new char[sMountPoint.length() + 1];
+    std::strcpy(c_data, sMountPoint.c_str());
+
+    std::string smacAddress = "00-0E-64-08-1C-D2";
+    char *c_mac = new char[smacAddress.length() + 1];
+    std::strcpy(c_mac, smacAddress.c_str());
+
+    // check input data validity
+    if ( lf_parse( (unsigned char*)c_mac, (unsigned char*)c_data, & lfDesc ) == LF_TRUE ) {
+
+      /* Query number of camera channels */
+      lfChannels = lf_query_channels( & lfDesc );
+    }
+    else
+    {
+      std::cerr << " Could not read calibration data. " << std::endl;
+      return false;
+    }
+
+    lfChannels = lf_query_channels( & lfDesc );
 
     for( lf_Size_t sensor_index = 0 ; sensor_index < lfChannels ; ++sensor_index )
     {
@@ -114,6 +144,11 @@ void  loadCalibrationData( std::vector < sensorData > & vec_sensorData,
 
       vec_sensorData.push_back(sD);
     }
+
+    /* Release descriptor */
+    lf_release( & lfDesc );
+
+    return true;
   };
 
 
