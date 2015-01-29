@@ -58,7 +58,154 @@
 #define DEBUG 0
 
 using namespace std;
+using namespace cv;
 
+/*********************************************************************
+*  project point cloud on panorama
+*
+**********************************************************************/
+
+bool projectPointCloud (
+           std::vector < std::pair < vector <double >, vector <double> > > & pointAndPixels,
+           const vector< std::pair < vector <double >, vector<unsigned int> > > & pointAndColor,
+           const std::vector < std::vector <double> > & rigPose,
+           const std::vector < sensorData > & vec_sensorData )
+{
+  // extract rig rotation and center
+  double  Rrig[3][3] = {
+      { rigPose[0][0], rigPose[0][1], rigPose[0][2] },
+      { rigPose[1][0], rigPose[1][1], rigPose[1][2] },
+      { rigPose[2][0], rigPose[2][1], rigPose[2][2] }
+  };
+
+  vector <double> cRig = rigPose[3];
+
+  std::cout << " loaded rig pose " << endl;
+
+  // load image
+  std::string panoPath = "/home/sflotron/foxel/test/rigid_test/result_1404374415_319830.tif";
+  Mat pano_img;
+  pano_img = imread(panoPath.c_str(), CV_LOAD_IMAGE_COLOR );
+
+  // project point cloud into panorama
+  for( size_t i = 0 ; i < pointAndColor.size(); ++i )
+  {
+    // retreive point information
+    vector <double> pos   = pointAndColor[i].first;
+
+    // convert point cloud into rig referential, i.e. x_rig = R_rig ( x - C_rig )
+    double  xcentered[3];
+
+    xcentered[0] = pos[0] - cRig[0];
+    xcentered[1] = pos[1] - cRig[1];
+    xcentered[2] = pos[2] - cRig[2];
+
+    double xrig = Rrig[0][0] * xcentered[0] + Rrig[0][1] * xcentered[1] + Rrig[0][2] *  xcentered[2];
+    double yrig = Rrig[1][0] * xcentered[0] + Rrig[1][1] * xcentered[1] + Rrig[1][2] *  xcentered[2];
+    double zrig = Rrig[2][0] * xcentered[0] + Rrig[2][1] * xcentered[1] + Rrig[2][2] *  xcentered[2];
+
+    const lf_Real_t  X[4] = { xrig, yrig, zrig, 1.0 };
+
+    // count the number of subcam in which point is apparing
+    lf_Size_t cpt = 0;
+
+    for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j )
+    {
+      // extract sensor information
+      sensorData  sd = vec_sensorData[j];
+
+      // compute depth related to camera j
+      lf_Real_t  X_C[3] = { X[0] - sd.C[0],  X[1] - sd.C[1], X[2] -sd.C[2]};
+      lf_Real_t depth = sd.R[6] * X_C[0] + sd.R[7] * X_C[1] + sd.R[8] * X_C[2];
+
+      // initialize projected pixels
+      lf_Real_t  ug = -1.0;
+      lf_Real_t  vg = -1.0;
+
+      //  if depth > 0, point could be seen from camera j
+      if( cpt == 0 && depth > 1.0e-6  && sqrt(X_C[0] * X_C[0] + X_C[1]*X_C[1] + X_C[2]*X_C[2]) < 100.0 )
+      {
+        double  PX0 = sd.P[0] * X[0] + sd.P[1] * X[1] + sd.P[2 ] * X[2] + sd.P[3 ] * X[3];
+        double  PX1 = sd.P[4] * X[0] + sd.P[5] * X[1] + sd.P[6 ] * X[2] + sd.P[7 ] * X[3];
+        double  PX2 = sd.P[8] * X[0] + sd.P[9] * X[1] + sd.P[10] * X[2] + sd.P[11] * X[3];
+
+        // update projected pixel value
+        ug = PX0 / PX2 ;
+        vg = PX1 / PX2 ;
+
+        if ( ug > 0.0 && ug < sd.lfWidth && vg > 0.0 && vg < sd.lfHeight)
+        {
+          // retreive pixel in panorama
+          lf_Real_t  up = 0.0;
+          lf_Real_t  vp = 0.0;
+
+          // apply inverse gnomonic projection
+          lg_gtt_elphel_point(
+          &up,
+          &vp,
+          ug,
+          vg,
+          sd.lfpx0,
+          sd.lfpy0,
+          sd.lfImageFullWidth,
+          sd.lfImageFullHeight,
+          sd.lfXPosition,
+          sd.lfYPosition,
+          sd.lfRoll,
+          sd.lfAzimuth,
+          sd.lfElevation,
+          sd.lfHeading,
+          sd.lfPixelSize,
+          sd.lfFocalLength
+          );
+
+          if( up < 0.0 )
+            up += sd.lfImageFullWidth;
+
+            if( up > 5 && up < sd.lfImageFullWidth-5 && vp > 5 && vp < sd.lfImageFullHeight-5 )
+            {
+              // export point on panorama (for debug purpose only)
+              for(int k = -1 ; k < 2 ; ++k)
+                for( int l = -1; l < 2 ; ++l)
+                {
+                  // export point on stiched panorama
+                  Vec3b color = pano_img.at<Vec3b>(Point(up + sd.lfXPosition + k, vp + sd.lfYPosition + l));
+                  color.val[0] =  0;
+                  color.val[1] =  0;
+                  color.val[2] =  255;
+
+                  // set pixel
+                  pano_img.at<Vec3b>(Point(up + sd.lfXPosition +k , vp + sd.lfYPosition + l)) = color;
+                }
+
+              // export projected point
+              std::vector < double > pixels;
+              std::vector < double > point;
+
+              pixels.push_back(up + sd.lfXPosition);
+              pixels.push_back(vp + sd.lfYPosition);
+
+              point.push_back( xrig );
+              point.push_back( yrig );
+              point.push_back( zrig );
+
+              pointAndPixels.push_back( std::make_pair( point, pixels ) );
+
+              ++cpt;
+            }
+          }
+        }
+      }
+    }
+
+    imwrite( "./pointcloud_on_pano.tif", pano_img);
+
+    if( pointAndPixels.size() > 0 )
+      return true;
+    else
+      return false;
+
+};
 
 /*********************************************************************
 *  load calibration data related to elphel cameras
@@ -204,7 +351,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
 *
 **********************************************************************/
 
-bool  loadRigPose ( const char * fileName, vector< std::vector<double> > rigPose )
+bool  loadRigPose ( const char * fileName, vector< std::vector<double> > & rigPose )
 {
 
   // load pose
