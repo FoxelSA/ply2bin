@@ -115,45 +115,9 @@ int main(int argc, char** argv) {
             std::cout << "Projected point cloud on panorama \n\n" << std::endl;
         }
 
-#if 0
-        // create export stream
-        std::string  outpath(argv[2]);
-
-        FILE *out;
-        out = fopen(outpath.c_str(), "w");
-
-        //create header
-        fprintf(out, "ply\n");
-        fprintf(out, "format ascii 1.0\n");
-        fprintf(out, "element vertex %d\n", (int) vec_inliers.size());
-        fprintf(out, "property float x\n");
-        fprintf(out, "property float y\n");
-        fprintf(out, "property float z\n");
-        fprintf(out, "property uchar red\n");
-        fprintf(out, "property uchar green\n");
-        fprintf(out, "property uchar blue\n");
-        fprintf(out, "end_header\n");
-
-       // clean point cloud
-       for( i = 0; i < (int) vec_inliers.size() ; ++i)
-       {
-          // retreive point information
-          vector <double> position = pointAndColor[vec_inliers[i]].first;
-          vector <unsigned int> color    = pointAndColor[vec_inliers[i]].second;
-
-          // write coordinates in files
-          fprintf(out,"%15f %15f %15f ", position[0] , position[1], position[2]);
-
-          // write colors in file
-          fprintf(out, "%6d %6d %6d \n", color[0], color[1], color[2] );
-
-       }
-
-       // close stream
-       fclose(out);
-#endif
-
-       return 0;
+        /// export point cloud to json ///
+        exportToJson( argv[2] , pointAndPixels );
+        return 0;
     }
 
 }

@@ -212,6 +212,54 @@ bool projectPointCloud (
 };
 
 /*********************************************************************
+*  export projected point cloud to json file
+*
+**********************************************************************/
+
+void  exportToJson ( const char * jsonName,
+                      std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels)
+{
+
+  // create export stream
+  std::string  outpath( jsonName );
+
+  FILE *out;
+  out = fopen(outpath.c_str(), "w");
+
+  //create header
+  fprintf(out, "{\n\n");
+  fprintf(out, "   \"points\": [\n\n");
+
+  // export points and coordinates
+  for( int i = 0; i < (int) pointAndPixels.size() ; ++i)
+  {
+    std::vector <double>  pt      = pointAndPixels[i].first;
+    std::vector <double>  pixels  = pointAndPixels[i].second;
+
+    fprintf(out, "        {\n\n");
+
+    fprintf(out, "            \"depth\": %f,\n", sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
+    fprintf(out, "            \"x\": %f,\n", pt[0] );
+    fprintf(out, "            \"y\": %f,\n", pt[1] );
+    fprintf(out, "            \"z\": %f,\n", pt[2] );
+    fprintf(out, "            \"up\": %f,\n", pixels[0] );
+    fprintf(out, "            \"vp\": %f\n", pixels[1] );
+
+    if ( i < (int) pointAndPixels.size()-1 )
+         fprintf(out, "        }, \n\n");
+    else
+         fprintf(out, "        } \n\n");
+  }
+
+  fprintf(out, "    ]\n\n");
+  fprintf(out, "}\n");
+
+  // close stream
+  fclose(out);
+}
+
+
+/*********************************************************************
 *  load calibration data related to elphel cameras
 *
 **********************************************************************/
