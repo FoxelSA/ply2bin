@@ -55,7 +55,7 @@
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 using namespace std;
 using namespace cv;
@@ -82,7 +82,7 @@ bool projectPointCloud (
 
 #if DEBUG
   // load image
-  std::string panoPath = "/home/sflotron/foxel/test/rigid_test/result_1404374415_319830.tif";
+  std::string panoPath = "/home/sflotron/foxel/test/muref_crown_25pano/result_1404374551_319830.tif";
   Mat pano_img;
   pano_img = imread(panoPath.c_str(), CV_LOAD_IMAGE_COLOR );
 #endif
@@ -227,8 +227,9 @@ void  exportToJson ( const char * jsonName,
   out = fopen(outpath.c_str(), "w");
 
   //create header
-  fprintf(out, "{\n\n");
-  fprintf(out, "   \"points\": [\n\n");
+  fprintf(out, "{\n");
+  fprintf(out, "   \"nb_points\": %ld,\n", pointAndPixels.size());
+  fprintf(out, "   \"points\": [\n");
 
   // export points and coordinates
   for( int i = 0; i < (int) pointAndPixels.size() ; ++i)
@@ -236,7 +237,7 @@ void  exportToJson ( const char * jsonName,
     std::vector <double>  pt      = pointAndPixels[i].first;
     std::vector <double>  pixels  = pointAndPixels[i].second;
 
-    fprintf(out, "        {\n\n");
+    fprintf(out, "        {\n");
 
     fprintf(out, "            \"depth\": %f,\n", sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
     fprintf(out, "            \"x\": %f,\n", pt[0] );
@@ -246,12 +247,12 @@ void  exportToJson ( const char * jsonName,
     fprintf(out, "            \"vp\": %f\n", pixels[1] );
 
     if ( i < (int) pointAndPixels.size()-1 )
-         fprintf(out, "        }, \n\n");
+         fprintf(out, "        }, \n");
     else
-         fprintf(out, "        } \n\n");
+         fprintf(out, "        } \n");
   }
 
-  fprintf(out, "    ]\n\n");
+  fprintf(out, "    ]\n");
   fprintf(out, "}\n");
 
   // close stream

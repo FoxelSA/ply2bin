@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
         }
 
         /// load panorama pose ///
-        std::string  posePath = "/home/sflotron/foxel/test/rigid_test/test/SfM_output/rigs/1404374415_319830.txt";
+        std::string  posePath = "/home/sflotron/foxel/test/muref_crown_25pano/test_export/SfM_output/rigs/10.txt";
         vector< std::vector<double> > rigPose;
 
         bool bLoadPose = loadRigPose ( posePath.c_str(), rigPose);
