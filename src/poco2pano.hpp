@@ -80,12 +80,12 @@ bool projectPointCloud (
 
   vector <double> cRig = rigPose[3];
 
-  std::cout << " loaded rig pose " << endl;
-
+#if DEBUG
   // load image
   std::string panoPath = "/home/sflotron/foxel/test/rigid_test/result_1404374415_319830.tif";
   Mat pano_img;
   pano_img = imread(panoPath.c_str(), CV_LOAD_IMAGE_COLOR );
+#endif
 
   // project point cloud into panorama
   for( size_t i = 0 ; i < pointAndColor.size(); ++i )
@@ -164,6 +164,8 @@ bool projectPointCloud (
 
             if( up > 5 && up < sd.lfImageFullWidth-5 && vp > 5 && vp < sd.lfImageFullHeight-5 )
             {
+
+#if DEBUG
               // export point on panorama (for debug purpose only)
               for(int k = -1 ; k < 2 ; ++k)
                 for( int l = -1; l < 2 ; ++l)
@@ -177,7 +179,7 @@ bool projectPointCloud (
                   // set pixel
                   pano_img.at<Vec3b>(Point(up + sd.lfXPosition +k , vp + sd.lfYPosition + l)) = color;
                 }
-
+#endif
               // export projected point
               std::vector < double > pixels;
               std::vector < double > point;
@@ -198,7 +200,9 @@ bool projectPointCloud (
       }
     }
 
+#if DEBUG
     imwrite( "./pointcloud_on_pano.tif", pano_img);
+#endif
 
     if( pointAndPixels.size() > 0 )
       return true;
