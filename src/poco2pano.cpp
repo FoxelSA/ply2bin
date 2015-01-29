@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
         char *c_mac = new char[smacAddress.length() + 1];
         std::strcpy(c_mac, smacAddress.c_str());
 
+        // check input data validity
         if ( lf_parse( (unsigned char*)c_mac, (unsigned char*)c_data, & lfDesc ) == LF_TRUE ) {
 
           /* Query number of camera channels */
@@ -87,55 +88,8 @@ int main(int argc, char** argv) {
         // now extract calibration information related to each module
         std::vector < sensorData > vec_sensorData;
 
-        for( lf_Size_t sensor_index = 0 ; sensor_index < lfChannels ; ++sensor_index )
-        {
-          sensorData  sD;
-
-          // query panorama width and height
-          sD.lfImageFullWidth  = lf_query_ImageFullWidth ( sensor_index, & lfDesc );
-          sD.lfImageFullHeight = lf_query_ImageFullLength( sensor_index, & lfDesc );
-
-          sD.lfpixelCorrectionWidth  = lf_query_pixelCorrectionWidth (sensor_index, &lfDesc);
-          sD.lfpixelCorrectionHeight = lf_query_pixelCorrectionHeight(sensor_index, &lfDesc);
-
-          /* Query position of eqr tile in panorama */
-          sD.lfXPosition = lf_query_XPosition ( sensor_index, & lfDesc );
-          sD.lfYPosition = lf_query_YPosition ( sensor_index, & lfDesc );
-
-          /* Query number width and height of sensor image */
-          sD.lfWidth  = lf_query_pixelCorrectionWidth ( sensor_index, & lfDesc );
-          sD.lfHeight = lf_query_pixelCorrectionHeight( sensor_index, & lfDesc );
-
-          /* Query focal length of camera sensor index */
-          sD.lfFocalLength = lf_query_focalLength( sensor_index , & lfDesc );
-          sD.lfPixelSize   = lf_query_pixelSize  ( sensor_index , & lfDesc );
-
-          /* Query angles used for gnomonic rotation */
-          sD.lfAzimuth    = lf_query_azimuth    ( sensor_index , & lfDesc );
-          sD.lfHeading    = lf_query_heading    ( sensor_index , & lfDesc );
-          sD.lfElevation  = lf_query_elevation  ( sensor_index , & lfDesc );
-          sD.lfRoll       = lf_query_roll       ( sensor_index , & lfDesc );
-
-          // compute rotation and store it.
-          computeRotationEl ( &sD.R[0] , sD.lfAzimuth , sD.lfHeading, sD.lfElevation, sD.lfRoll );
-
-          /* Query principal point */
-          sD.lfpx0 = lf_query_px0 ( sensor_index , & lfDesc );
-          sD.lfpy0 = lf_query_py0 ( sensor_index , & lfDesc );
-
-          /* Query information related to entrance pupil center */
-          sD.lfRadius   = lf_query_radius               ( sensor_index , & lfDesc );
-          sD.lfCheight  = lf_query_height               ( sensor_index , & lfDesc );
-          sD.lfEntrance = lf_query_entrancePupilForward ( sensor_index , & lfDesc );
-
-          // compute optical center in camera coordinate and store it
-          getOpticalCenter ( &sD.C[0] , sD.lfRadius, sD.lfCheight, sD.lfAzimuth, sD.R, sD.lfEntrance );
-
-          // compute projection matrix
-          computeProjMat ( &sD.P[0] , sD.lfFocalLength / sD.lfPixelSize, sD.lfpx0, sD.lfpy0, sD.R, sD.C);
-
-          vec_sensorData.push_back(sD);
-        }
+        loadCalibrationData( vec_sensorData, lfDesc );
+        lfChannels = lf_query_channels( & lfDesc );
 
         /* Release descriptor */
         lf_release( & lfDesc );
@@ -234,7 +188,7 @@ int main(int argc, char** argv) {
 
            const lf_Real_t  X[4] = { xrig, yrig, zrig, 1.0 };
 
-           for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j )
+           for( size_t j = 0; j < lfChannels-2 ; ++j )
            {
                 // extract sensor information
                 sensorData  sd = vec_sensorData[j];
