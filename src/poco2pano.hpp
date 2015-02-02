@@ -459,11 +459,11 @@ bool  loadRigPose ( const char * fileName, vector< std::vector<double> > & rigPo
   //close stream
   pose.close();
 
-  if( rigPose.size() > 0 )
+  if( rigPose.size() == 4 )
     return true;
   else
   {
-    std::cerr << "Pose file is empty \n" << std::endl;
+    std::cerr << "Pose file is not valid, please check your input file \n" << std::endl;
     return false;
   }
 
