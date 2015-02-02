@@ -240,11 +240,15 @@ void  exportToJson ( const char * jsonName,
     fprintf(out, "        {\n");
 
     fprintf(out, "            \"depth\": %f,\n", sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
-    fprintf(out, "            \"x\": %f,\n", pt[0] );
-    fprintf(out, "            \"y\": %f,\n", pt[1] );
-    fprintf(out, "            \"z\": %f,\n", pt[2] );
-    fprintf(out, "            \"up\": %f,\n", pixels[0] );
-    fprintf(out, "            \"vp\": %f\n", pixels[1] );
+    fprintf(out, "            \"coordinate\": [ \n");
+    fprintf(out, "                 %f,\n", pt[0] );
+    fprintf(out, "                 %f,\n", pt[1] );
+    fprintf(out, "                 %f \n", pt[2] );
+    fprintf(out, "             ],\n");
+    fprintf(out, "            \"eqrPixels\": [ \n");
+    fprintf(out, "                 %f, \n", pixels[0] );
+    fprintf(out, "                 %f \n", pixels[1] );
+    fprintf(out, "             ] \n");
 
     if ( i < (int) pointAndPixels.size()-1 )
          fprintf(out, "        }, \n");
