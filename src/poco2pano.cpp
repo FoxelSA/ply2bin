@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
         }
         else
         {
-          std::cout << "Loaded calibration information\n\n" << std::endl;
+          std::cout << "Loaded calibration information " << std::endl;
         }
 
         /// load point cloud ///
@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
         }
         else
         {
-          std::cout << "Loaded point cloud \n\n" << std::endl;
+          std::cout << "Loaded point cloud " << std::endl;
         }
 
         /// load panorama pose ///
@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
         }
         else
         {
-          std::cout << "Loaded panorama pose \n\n" << std::endl;
+          std::cout << "Loaded panorama pose " << std::endl;
         }
 
         /// project point cloud on panorama ///
@@ -107,12 +107,12 @@ int main(int argc, char** argv) {
 
         if( !bProject )
         {
-            std::cerr << "No point are projected on your panorama \n \n" << std::endl;
+            std::cerr << "No point are projected on your panorama " << std::endl;
             return EXIT_FAILURE;
         }
         else
         {
-            std::cout << "Projected point cloud on panorama \n\n" << std::endl;
+            std::cout << "Projected point cloud on panorama " << std::endl;
         }
 
         /// export point cloud to json ///
