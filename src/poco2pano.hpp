@@ -376,19 +376,45 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
   unsigned int r, g, b;
 
   // skip header and go to line (first 10 lines of file)
-  for(int k=0; k < 10 ; ++k)
-    data.ignore(10000,'\n');
+  bool  bReadHeader = false;
+  lf_Size_t  headerSize = 0;
+  while( !data.eof() )
+  {
+      std::string line ;
+      getline(data,line);
 
-  while (data >> x >> y >> z >> r >> g >> b){
-      // store point information in big vector
-      vector <double>  position;
-      vector <unsigned int> color;
+      // while header is not read, compute number of line
+      if( line == "end_header")
+      {
+        ++headerSize;
+        bReadHeader = true;
+      }
 
-      position.push_back(x); position.push_back(y); position.push_back(z);
-      color.push_back(r);    color.push_back(g);    color.push_back(b);
+      if( !bReadHeader )
+        ++headerSize ;
 
-      pointAndColor.push_back(std::make_pair(position, color));
-   }
+      // for now, read only ply file with 3d coordinate and color
+      if( headerSize != 10 && bReadHeader )
+      {
+         std::cerr << "Ply file not yet supported ! Header should have 10 lines and we have " << headerSize << " lines " << std::endl;
+         return false;
+      }
+
+      // if we skipped header, load point cloud.
+      if( bReadHeader && headerSize == 10 )
+      {
+        data >> x >> y >> z >> r >> g >> b ;
+
+        // store point information in big vector
+        vector <double>  position;
+        vector <unsigned int> color;
+
+        position.push_back(x); position.push_back(y); position.push_back(z);
+        color.push_back(r);    color.push_back(g);    color.push_back(b);
+
+        pointAndColor.push_back(std::make_pair(position, color));
+      }
+  }
 
   // close stream
   data.close();
