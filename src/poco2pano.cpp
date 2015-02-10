@@ -36,6 +36,38 @@
  *      Attribution" section of <http://foxel.ch/license>.
  */
 
+ /*! \file poco2pano.cpp
+ * \author Stephane Flotron <s.flotron@foxel.ch>
+ */
+ /*! \mainpage poco2pano
+ * \section poco2pano
+ *
+ * Point cloud exportation to freepano
+ *
+ * \section Documentation
+ *
+ * Documentation can be consulted on the [wiki](https://github.com/baritone/poco2pano/wiki).
+ *
+ * \section Copyright
+ *
+ * Copyright (c) 2013-2014 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />
+ * This program is part of the FOXEL project <[http://foxel.ch](http://foxel.ch)>.
+ *
+ * Please read the [COPYRIGHT.md](COPYRIGHT.md) file for more information.
+ *
+ * \section License
+ *
+ * This program is licensed under the terms of the
+ * [GNU Affero General Public License v3](http://www.gnu.org/licenses/agpl.html)
+ * (GNU AGPL), with two additional terms. The content is licensed under the terms
+ * of the [Creative Commons Attribution-ShareAlike 4.0 International](http://creativecommons.org/licenses/by-sa/4.0/)
+ * (CC BY-SA) license.
+ *
+ * You must read <[http://foxel.ch/license](http://foxel.ch/license)> for more
+ *information about our Licensing terms and our Usage and Attribution guidelines.
+ *
+ */
+
 #include <stdlib.h>
 #include <cmath>
 #include <cstring>
@@ -43,6 +75,24 @@
 #include <project.hpp>
 
 using namespace cv;
+
+/*********************************************************************
+*  software main function
+*
+**********************************************************************/
+
+/*! \brief  Given a point cloud and a rig pose, project the point cloud
+*           on the stiched EQR panorama.
+*
+* Given a panorama pose (Rotation and translation), project the point cloud
+* on the associated submodules and compute the corresponding pixels on the
+* stiched EQR panorama.
+*
+* \param point_cloud      complete path and name of the point cloud
+* \param json             complete path and name of the json file
+*
+* \return 0 if the projection and export was sucessfull.
+*/
 
 int main(int argc, char** argv) {
 
