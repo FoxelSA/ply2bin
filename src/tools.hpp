@@ -36,6 +36,41 @@
  *      Attribution" section of <http://foxel.ch/license>.
  */
 
+ /*! \file tools.hpp
+ * \author Stephane Flotron <s.flotron@foxel.ch>
+ */
+ /*! \mainpage poco2pano
+ * \section poco2pano
+ *
+ * Point cloud exportation to freepano
+ *
+ * \section Documentation
+ *
+ * Documentation can be consulted on the [wiki](https://github.com/baritone/poco2pano/wiki).
+ *
+ * \section Copyright
+ *
+ * Copyright (c) 2013-2014 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />
+ * This program is part of the FOXEL project <[http://foxel.ch](http://foxel.ch)>.
+ *
+ * Please read the [COPYRIGHT.md](COPYRIGHT.md) file for more information.
+ *
+ * \section License
+ *
+ * This program is licensed under the terms of the
+ * [GNU Affero General Public License v3](http://www.gnu.org/licenses/agpl.html)
+ * (GNU AGPL), with two additional terms. The content is licensed under the terms
+ * of the [Creative Commons Attribution-ShareAlike 4.0 International](http://creativecommons.org/licenses/by-sa/4.0/)
+ * (CC BY-SA) license.
+ *
+ * You must read <[http://foxel.ch/license](http://foxel.ch/license)> for more
+ *information about our Licensing terms and our Usage and Attribution guidelines.
+ *
+ */
+
+ #ifndef TOOLS_HPP_
+ #define TOOLS_HPP_
+
  #include <fastcal-all.h>
  #include <string>
  #include <cmath>
@@ -43,15 +78,68 @@
 
  using namespace std;
 
- #ifndef TOOLS_HPP_
- #define TOOLS_HPP_
 
 /******************************************************************************
  * sensorData
  *****************************************************************************/
+
+ /*! \struct sensorData
+ * \brief structure used to store calibration information
+ *
+ * This structure is designed to store the needed informations coming from
+ * the elphel camera calibration
+ *
+ * \var sensorData::lfWidth
+ *  Width of sensor image
+ * \var sensorData::lfHeight
+ *  Height of sensor image
+ * \var sensorData::lfChannels
+ *  Number of channels of elphel camera
+ * \var sensorData::lfXPosition
+ *  X coordinate of left corner of EQR tile in panorama
+ * \var sensorData::lfYPosition
+ *  Y coordinate of left corner of EQR tile in panorama
+ * \var sensorData::lfImageFullWidth
+ *  Sitched EQR panorama width
+ * \var sensorData::lfImageFullHeight
+ *  Sitched EQR panorama height
+ * \var sensorData::lfpixelCorrectionWidth
+ *  Width of sensor image
+ * \var sensorData::lfpixelCorrectionHeight
+ *  Height of sensor image
+ * \var sensorData::lfFocalLength
+ *  Focal length in mm
+ * \var sensorData::lfPixelSize
+ *  pixel size in mm
+ * \var sensorData::lfAzimuth
+ *  azimuth angle in elphel coordinate frame (in radian)
+ * \var sensorData::lfHeading
+ *  heading angle in elphel coordinate frame (in radian)
+ * \var sensorData::lfElevation
+ *  Elevation angle in elphel coordinate frame (in radian)
+ * \var sensorData::lfRoll
+ *  roll around z axis (in radian)
+ * \var sensorData::lfpx0
+ *  x coordinate of principal point of sensor image, in pixels
+ * \var sensorData::lfpy0
+ *  y coordinate of principal point of sensor image, in pixels
+ * \var sensorData::lfRadius
+ *  radius of optical center of channel in elphel coordinate frame
+ * \var sensorData::lfCheight
+ *  height of optical center of channel in elphel coordinate frame
+ * \var sensorData::lfEntrance
+ *  Entrance pupil forward of channel
+ * \var sensorData::R
+ *  Rotation matrix rig coordinate frame to sensor coordinate frame
+ * \var sensorData::C
+ *  Optical center position in rig coordinate frame
+ * \var sensorData::P
+ *  Projection matrix associated to sensor
+ */
+
 struct sensorData
 {
-  
+
       lf_Size_t   lfWidth     = 0;
       lf_Size_t   lfHeight    = 0;
       lf_Size_t   lfChannels  = 0;
@@ -94,6 +182,7 @@ struct sensorData
  *
  ********************************************************************************
  */
+
  void computeProjMat (  lf_Real_t* P ,
                         const lf_Real_t focal ,
                         const lf_Real_t px0,
