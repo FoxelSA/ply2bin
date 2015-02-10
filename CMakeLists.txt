@@ -71,6 +71,19 @@ IF (OPENMP_FOUND)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
  ENDIF (OPENMP_FOUND)
 
+ # ==============================================================================
+# add a target to generate API documentation with Doxygen
+# ===============================================================================
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+    add_custom_target(doc
+        ${DOXYGEN_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+endif(DOXYGEN_FOUND)
+
 # ==============================================================================
 # OpenCV / pkgconfig  detection
 # ==============================================================================
