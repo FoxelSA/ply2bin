@@ -1,5 +1,5 @@
 /*
- * types.hpp
+ * poco2pano - Export openMVG point cloud to freepano
  *
  * Copyright (c) 2015 FOXEL SA - http://foxel.ch
  * Please read <http://foxel.ch/license> for more information.
@@ -36,56 +36,9 @@
  *      Attribution" section of <http://foxel.ch/license>.
  */
 
- #include <fastcal-all.h>
- #include <string>
- #include <iostream>
+ #include <tools.hpp>
 
  using namespace std;
-
- #ifndef TOOLS_HPP_
- #define TOOLS_HPP_
-
-/******************************************************************************
- * sensorData
- *****************************************************************************/
-struct sensorData
-{
-    lf_Size_t   lfWidth     = 0;
-    lf_Size_t   lfHeight    = 0;
-    lf_Size_t   lfChannels  = 0;
-    lf_Size_t   lfXPosition = 0;
-    lf_Size_t   lfYPosition = 0;
-    lf_Size_t   lfImageFullWidth  = 0;
-    lf_Size_t   lfImageFullHeight = 0;
-    lf_Size_t   lfpixelCorrectionWidth  = 0;
-    lf_Size_t   lfpixelCorrectionHeight = 0;
-
-    lf_Real_t   lfFocalLength = 0.0;
-    lf_Real_t   lfPixelSize   = 0.0;
-    lf_Real_t   lfAzimuth     = 0.0;
-    lf_Real_t   lfHeading     = 0.0;
-    lf_Real_t   lfElevation   = 0.0;
-    lf_Real_t   lfRoll        = 0.0;
-    lf_Real_t   lfpx0         = 0.0;
-    lf_Real_t   lfpy0         = 0.0;
-    lf_Real_t   lfRadius      = 0.0;
-    lf_Real_t   lfCheight     = 0.0;
-    lf_Real_t   lfEntrance    = 0.0;
-
-    lf_Real_t R[9] = {
-        1.0, 0.0, 0.0,
-        0.0, 1.0, 0.0,
-        0.0, 0.0, 1.0};
-
-    lf_Real_t C[3] = {0,0,0};
-
-    lf_Real_t P[12] = {
-       1.0, 0.0, 0.0, 0.0,
-       0.0, 1.0, 0.0, 0.0,
-       1.0, 0.0, 1.0, 0.0
-    };
-
- };
 
  /*******************************************************************************
  *  Given focal, px0, py0, R and optical center C, compute projection matrix
@@ -107,14 +60,16 @@ struct sensorData
      t[2] = - 1.0 * ( R[6] * C[0] + R[7] * C[1] + R[8] * C[2] );
 
      // intialize camera Matrix
-     lf_Real_t  K[3][3] = {
+     lf_Real_t  K[3][3] =
+     {
           {focal,   0.0, px0},
           {  0.0, focal, py0},
           {  0.0,   0.0, 1.0}
      };
 
      // initialize temporary rotation matrix
-     lf_Real_t  Q[3][3] = {
+     lf_Real_t  Q[3][3] =
+     {
         {  R[0], R[1], R[2]},
         {  R[3], R[4], R[5]},
         {  R[6], R[7], R[8]}
@@ -137,6 +92,7 @@ struct sensorData
      P[3 ] = K[0][0] * t[0] + K[0][1] * t[1] + K[0][2] * t[2];
      P[7 ] = K[1][0] * t[0] + K[1][1] * t[1] + K[1][2] * t[2];
      P[11] = K[2][0] * t[0] + K[2][1] * t[1] + K[2][2] * t[2];
+
 }
 
  /*******************************************************************************
@@ -146,49 +102,56 @@ struct sensorData
  */
  void computeRotationEl ( lf_Real_t* R , lf_Real_t az , lf_Real_t head, lf_Real_t ele , lf_Real_t roll)
 {
-  //z-axis rotation
-  lf_Real_t Rz[3][3] = {
-    { cos(roll),-sin(roll), 0.0},
-    {-sin(roll),-cos(roll), 0.0},
-    {       0.0,      0.0, 1.0} };
+    //z-axis rotation
+    lf_Real_t Rz[3][3] =
+    {
+        { cos(roll),-sin(roll), 0.0},
+        {-sin(roll),-cos(roll), 0.0},
+        {       0.0,       0.0, 1.0}
+    };
 
-  // x-axis rotation
-  lf_Real_t Rx[3][3] = {
-    {1.0,      0.0,     0.0},
-    {0.0, cos(ele),sin(ele)},
-    {0.0,-sin(ele),cos(ele)} };
+    // x-axis rotation
+    lf_Real_t Rx[3][3] =
+    {
+        {1.0,      0.0,     0.0},
+        {0.0, cos(ele),sin(ele)},
+        {0.0,-sin(ele),cos(ele)}
+    };
 
-  // y axis rotation
-  lf_Real_t Ry[3][3] = {
-    { cos(head+az), 0.0, sin(head+az)},
-    {          0.0,-1.0,          0.0},
-    {-sin(head+az), 0.0, cos(head+az)} };
+    // y axis rotation
+    lf_Real_t Ry[3][3] =
+    {
+        { cos(head+az), 0.0, sin(head+az)},
+        {          0.0,-1.0,          0.0},
+        {-sin(head+az), 0.0, cos(head+az)}
+    };
 
-  // 3) R = R2*R1*R0 transform sensor coordinate to panorama coordinate
-  lf_Real_t  RxRz[3][3] = {0.0};
-  lf_Real_t  RT[3][3] = {0.0};
+    // 3) R = R2*R1*R0 transform sensor coordinate to panorama coordinate
+    lf_Real_t  RxRz[3][3] = {0.0};
+    lf_Real_t  RT[3][3] = {0.0};
 
-  // compute product of rotations
-  int i=0, j=0;
+    // compute product of rotations (note elphel rotation is R = S_y.R_y.R_x.R_z.S_y )
+    int i=0, j=0;
 
-  for(i=0 ; i < 3 ; ++i)
-    for(j=0; j < 3 ; ++j)
-      RxRz[i][j] = Rx[i][0] * Rz[0][j] + Rx[i][1] * Rz[1][j] + Rx[i][2] * Rz[2][j];
+    for(i=0 ; i < 3 ; ++i)
+        for(j=0; j < 3 ; ++j)
+            RxRz[i][j] = Rx[i][0] * Rz[0][j] + Rx[i][1] * Rz[1][j] + Rx[i][2] * Rz[2][j];
 
-  for(i=0 ; i < 3 ; ++i)
-    for(j=0; j < 3 ; ++j)
-        RT[i][j] = Ry[i][0] * RxRz[0][j] + Ry[i][1] * RxRz[1][j] + Ry[i][2] * RxRz[2][j];
+    for(i=0 ; i < 3 ; ++i)
+        for(j=0; j < 3 ; ++j)
+              RT[i][j] = Ry[i][0] * RxRz[0][j] + Ry[i][1] * RxRz[1][j] + Ry[i][2] * RxRz[2][j];
 
-  // transpose because we need the transformation panorama to sensor coordinate !
-  R[0] = RT[0][0];
-  R[1] = RT[1][0];
-  R[2] = RT[2][0];
-  R[3] = RT[0][1];
-  R[4] = RT[1][1];
-  R[5] = RT[2][1];
-  R[6] = RT[0][2];
-  R[7] = RT[1][2];
-  R[8] = RT[2][2];
+    // transpose because we need the transformation panorama to sensor coordinate !
+    R[0] = RT[0][0];
+    R[1] = RT[1][0];
+    R[2] = RT[2][0];
+    R[3] = RT[0][1];
+    R[4] = RT[1][1];
+    R[5] = RT[2][1];
+    R[6] = RT[0][2];
+    R[7] = RT[1][2];
+    R[8] = RT[2][2];
+
 }
 
 /********************************************************************************
@@ -217,5 +180,3 @@ void getOpticalCenter ( lf_Real_t* C ,
       C[2] =  lensCenter[2] + R[8] * entrancePupilForward;
 
 }
-
-#endif /* TOOLS_HPP_ */
