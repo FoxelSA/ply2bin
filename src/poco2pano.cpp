@@ -64,12 +64,12 @@ int main(int argc, char** argv) {
 
         if( !bLoadedCalibData )
         {
-          std::cerr << " Could not read calibration data" << std::endl;
-          return EXIT_FAILURE;
+            std::cerr << " Could not read calibration data" << std::endl;
+            return EXIT_FAILURE;
         }
         else
         {
-          std::cout << "Loaded calibration information " << std::endl;
+            std::cout << "Loaded calibration information " << std::endl;
         }
 
         /// load point cloud ///
@@ -78,11 +78,11 @@ int main(int argc, char** argv) {
 
         if( !bLoadPC )
         {
-          return  EXIT_FAILURE;
+            return  EXIT_FAILURE;
         }
         else
         {
-          std::cout << "Loaded point cloud " << std::endl;
+            std::cout << "Loaded point cloud " << std::endl;
         }
 
         /// load panorama pose ///
@@ -93,11 +93,11 @@ int main(int argc, char** argv) {
 
         if( !bLoadPose )
         {
-          return EXIT_FAILURE;
+            return EXIT_FAILURE;
         }
         else
         {
-          std::cout << "Loaded panorama pose " << std::endl;
+            std::cout << "Loaded panorama pose " << std::endl;
         }
 
         /// project point cloud on panorama ///
