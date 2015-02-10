@@ -182,6 +182,20 @@ struct sensorData
  *
  ********************************************************************************
  */
+ 
+ /*! \brief Compute projection matrix
+ *
+ * Given focal, px0, py0, R and optical center C, compute projection matrix
+ *
+ * \param P       Projection matrix
+ * \param focal   focal length in pixel per mm
+ * \param px0     x coordinate of sensor's principal point
+ * \param py0     y coordinate of sensor's principal point
+ * \param R       sensor rotation in rig coordinate frame (i.e. rig to sensor )
+ * \param C       optical center position in rig coordinate frame
+ *
+ * \return Projection matrix in the 12 array P.
+ */
 
  void computeProjMat (  lf_Real_t* P ,
                         const lf_Real_t focal ,
@@ -195,6 +209,21 @@ struct sensorData
  *
  ********************************************************************************
  */
+
+ /*! \brief Compute rotation rig referential to sensor referential
+ *
+ * This function compute the rotation rig referential to sensor referential using
+ * elphel calibration angle and rotation.
+ *
+ * \param R Computed rotation
+ * \param az Elphel's Angle azimuth (in radian) of subcamera
+ * \param head Elphel's Angle heading (in radian) of subcamera
+ * \param ele Elphel's Angle elevation (in radian) of subcamera
+ * \param roll Elphel's Angle roll (in radian) of subcamera
+ *
+ * \return The rotation in the array R
+ */
+
  void computeRotationEl ( lf_Real_t* R ,
                           lf_Real_t az ,
                           lf_Real_t head,
@@ -205,6 +234,20 @@ struct sensorData
 *  Given three angles, entrance pupil forward, radius and height, compute optical center position.
 *
 ********************************************************************************
+*/
+
+/*! \brief Compute optical center of elphel's subcamera
+*
+* This function compute the optical center of a given elphel subcamera
+*
+* \param C Computed optical center
+* \param radius Radius of optical center in elphel's coordinate frame
+* \param heigt Height of optical center in elphel's coordinate frame
+* \param azimuth Elphel's Angle azimuth (in radian) of subcamera
+* \param R Rotation rig referential frame to sensor frame
+* \param entrancePupilForward Entrance pupil forward of the associated camera
+*
+* \return The optical center in the array C
 */
 
 void getOpticalCenter ( lf_Real_t* C ,
