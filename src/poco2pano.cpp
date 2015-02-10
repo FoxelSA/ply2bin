@@ -40,8 +40,7 @@
 #include <cmath>
 #include <cstring>
 #include <gnomonic-all.h>
-#include "types.hpp"
-#include "poco2pano.hpp"
+#include <project.hpp>
 
 using namespace cv;
 

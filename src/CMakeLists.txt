@@ -45,7 +45,12 @@ cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 # ==============================================================================
 # Build executable
 # ==============================================================================
-add_executable(poco2pano poco2pano.cpp)
+add_executable(poco2pano
+                  poco2pano.cpp
+                  project.cpp
+                  tools.cpp)
+
+
 target_link_libraries(poco2pano
   ${POCOTOPANO_LIBRARY_LIST}
 )

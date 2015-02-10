@@ -1,5 +1,5 @@
 /*
- * types.hpp
+ * poco2pano - Export openMVG point cloud to freepano
  *
  * Copyright (c) 2015 FOXEL SA - http://foxel.ch
  * Please read <http://foxel.ch/license> for more information.
@@ -36,56 +36,9 @@
  *      Attribution" section of <http://foxel.ch/license>.
  */
 
- #include <fastcal-all.h>
- #include <string>
- #include <iostream>
+ #include <tools.hpp>
 
  using namespace std;
-
- #ifndef TOOLS_HPP_
- #define TOOLS_HPP_
-
-/******************************************************************************
- * sensorData
- *****************************************************************************/
-struct sensorData
-{
-    lf_Size_t   lfWidth     = 0;
-    lf_Size_t   lfHeight    = 0;
-    lf_Size_t   lfChannels  = 0;
-    lf_Size_t   lfXPosition = 0;
-    lf_Size_t   lfYPosition = 0;
-    lf_Size_t   lfImageFullWidth  = 0;
-    lf_Size_t   lfImageFullHeight = 0;
-    lf_Size_t   lfpixelCorrectionWidth  = 0;
-    lf_Size_t   lfpixelCorrectionHeight = 0;
-
-    lf_Real_t   lfFocalLength = 0.0;
-    lf_Real_t   lfPixelSize   = 0.0;
-    lf_Real_t   lfAzimuth     = 0.0;
-    lf_Real_t   lfHeading     = 0.0;
-    lf_Real_t   lfElevation   = 0.0;
-    lf_Real_t   lfRoll        = 0.0;
-    lf_Real_t   lfpx0         = 0.0;
-    lf_Real_t   lfpy0         = 0.0;
-    lf_Real_t   lfRadius      = 0.0;
-    lf_Real_t   lfCheight     = 0.0;
-    lf_Real_t   lfEntrance    = 0.0;
-
-    lf_Real_t R[9] = {
-        1.0, 0.0, 0.0,
-        0.0, 1.0, 0.0,
-        0.0, 0.0, 1.0};
-
-    lf_Real_t C[3] = {0,0,0};
-
-    lf_Real_t P[12] = {
-       1.0, 0.0, 0.0, 0.0,
-       0.0, 1.0, 0.0, 0.0,
-       1.0, 0.0, 1.0, 0.0
-    };
-
- };
 
  /*******************************************************************************
  *  Given focal, px0, py0, R and optical center C, compute projection matrix
@@ -217,5 +170,3 @@ void getOpticalCenter ( lf_Real_t* C ,
       C[2] =  lensCenter[2] + R[8] * entrancePupilForward;
 
 }
-
-#endif /* TOOLS_HPP_ */

@@ -107,7 +107,7 @@ set(LIBFASTCAL_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/lib/libfastcal/bin/libfastcal.a)
 # Include directories
 # ==============================================================================
 include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${POCOTOPANO_SOURCE_DIR}
   ${OpenCV_INCLUDE_DIRS}
   ${LIBGNOMONIC_INCLUDE_DIR}
   ${LIBINTER_INCLUDE_DIR}
