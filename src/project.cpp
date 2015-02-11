@@ -225,6 +225,7 @@ void  exportToJson ( const char * jsonName,
         fprintf(out, "        {\n");
 
         fprintf(out, "            \"depth\": %f,\n", sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
+        fprintf(out, "            \"pointCloudIndex\": %d,\n", i );
         fprintf(out, "            \"coordinate\": [ \n");
         fprintf(out, "                 %f,\n", pt[0] );
         fprintf(out, "                 %f,\n", pt[1] );
