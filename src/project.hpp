@@ -137,8 +137,28 @@ bool projectPointCloud (
 */
 
 void  exportToJson ( const char * jsonName,
-                      std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels
+                     std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels
 );
+
+/*********************************************************************
+*  export point cloud to json file
+*
+**********************************************************************/
+
+/*! \brief Export point cloud in ply format into json file
+*
+* Given a list of 3D point, export it to a json file.
+*
+* \param jsonName         Name of json file in c-string array
+* \param pointAndPixels   List of 3D points and associated EQR pixels
+*
+* \return  Nothing
+*/
+
+void  pointCloudToJson ( const char * jsonName,
+                         std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndColor
+);
+
 
 /*********************************************************************
 *  load calibration data related to elphel cameras

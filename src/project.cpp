@@ -249,6 +249,52 @@ void  exportToJson ( const char * jsonName,
     fclose(out);
 }
 
+/*********************************************************************
+*  export point cloud to json file
+*
+**********************************************************************/
+
+void  pointCloudToJson ( const char * jsonName,
+    std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndColor )
+{
+
+  // create export stream
+  std::string  outpath( jsonName );
+
+  FILE *out;
+  out = fopen(outpath.c_str(), "w");
+
+  //create header
+  fprintf(out, "{\n");
+  fprintf(out, "   \"nb_points\": %ld,\n", pointAndColor.size());
+  fprintf(out, "   \"points\": [\n");
+
+  // export points and coordinates
+  for( int i = 0; i < (int) pointAndColor.size() ; ++i)
+  {
+    std::vector <double>  pt      = pointAndColor[i].first;
+    std::vector <double>  color   = pointAndColor[i].second;
+
+    fprintf(out, "        {\n");
+    fprintf(out, "            \"coordinates\": [ \n");
+    fprintf(out, "                 %f, \n", pt[0] );
+    fprintf(out, "                 %f, \n", pt[1] );
+    fprintf(out, "                 %f \n" , pt[2] );
+    fprintf(out, "             ] \n");
+
+    if ( i < (int) pointAndColor.size()-1 )
+        fprintf(out, "        }, \n");
+    else
+        fprintf(out, "        } \n");
+  }
+
+  fprintf(out, "    ]\n");
+  fprintf(out, "}\n");
+
+  // close stream
+  fclose(out);
+
+}
 
 /*********************************************************************
 *  load calibration data related to elphel cameras
