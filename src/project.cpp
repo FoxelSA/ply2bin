@@ -486,7 +486,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
     // close stream
     data.close();
 
-    if( pointAndColor.size () != nb_point )
+    if( pointAndColor.size () == nb_point )
         return true ;
     else
     {
