@@ -156,7 +156,7 @@ void  exportToJson ( const char * jsonName,
 */
 
 void  pointCloudToJson ( const char * jsonName,
-                         std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndColor
+                         std::vector < std::pair < std::vector <double>, std::vector <unsigned int> > > pointAndColor
 );
 
 

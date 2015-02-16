@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
         return 0;
 
     } else {
-        /// now extract calibration information related to each module ///
+        // now extract calibration information related to each module
         std::string  sMountPoint = argv[4];
         std::string  smacAddress = argv[5];
 
@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
             std::cout << "Loaded calibration information " << std::endl;
         }
 
-        /// load point cloud ///
+        // load point cloud
         vector< std::pair < vector <double >, vector<unsigned int> > > pointAndColor;
         bool  bLoadPC = loadPointCloud( argv[1], pointAndColor);
 
@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
             std::cout << "Loaded point cloud " << std::endl;
         }
 
-        /// load panorama pose ///
+        // load panorama pose
         std::string  posePath = argv[3];
         vector< std::vector<double> > rigPose;
 
@@ -158,7 +158,7 @@ int main(int argc, char** argv) {
             std::cout << "Loaded panorama pose " << std::endl;
         }
 
-        /// project point cloud on panorama ///
+        // project point cloud on panorama
         std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels;
         bool  bProject = projectPointCloud ( pointAndPixels, pointAndColor, rigPose, vec_sensorData );
 
@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
             std::cout << "Projected point cloud on panorama " << std::endl;
         }
 
-        /// export point cloud to json ///
+        // export point cloud to json
         exportToJson( argv[2] , pointAndPixels );
         return 0;
     }

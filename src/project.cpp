@@ -255,7 +255,7 @@ void  exportToJson ( const char * jsonName,
 **********************************************************************/
 
 void  pointCloudToJson ( const char * jsonName,
-    std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndColor )
+    std::vector < std::pair < std::vector <double>, std::vector <unsigned int> > > pointAndColor )
 {
 
   // create export stream
@@ -272,8 +272,8 @@ void  pointCloudToJson ( const char * jsonName,
   // export points and coordinates
   for( int i = 0; i < (int) pointAndColor.size() ; ++i)
   {
-    std::vector <double>  pt      = pointAndColor[i].first;
-    std::vector <double>  color   = pointAndColor[i].second;
+    std::vector <double>        pt      = pointAndColor[i].first;
+    std::vector <unsigned int>  color   = pointAndColor[i].second;
 
     fprintf(out, "        {\n");
     fprintf(out, "            \"coordinates\": [ \n");
