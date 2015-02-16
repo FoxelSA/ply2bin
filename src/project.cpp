@@ -89,6 +89,7 @@ bool projectPointCloud (
 
           // count the number of subcam in which point is apparing
           lf_Size_t cpt = 0;
+          const lf_Real_t  max_depth = 25.0;
 
           for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j )
           {
@@ -104,7 +105,10 @@ bool projectPointCloud (
               lf_Real_t  vg = -1.0;
 
               //  if depth > 0, point could be seen from camera j. Exclude point too far ( > 30.0 meter from rig)
-              if( cpt == 0 && depth > 1.0e-6  && sqrt(X_C[0] * X_C[0] + X_C[1]*X_C[1] + X_C[2]*X_C[2]) < 30.0 )
+              if( cpt == 0 && depth > 1.0e-6
+                           && abs(X_C[0]) < max_depth
+                           && abs(X_C[1]) < max_depth
+                           && abs(X_C[2]) < max_depth )
               {
                   double  PX0 = sd.P[0] * X[0] + sd.P[1] * X[1] + sd.P[2 ] * X[2] + sd.P[3 ] * X[3];
                   double  PX1 = sd.P[4] * X[0] + sd.P[5] * X[1] + sd.P[6 ] * X[2] + sd.P[7 ] * X[3];
@@ -226,7 +230,7 @@ void  exportToJson ( const char * jsonName,
         fprintf(out, "        {\n");
 
         fprintf(out, "            \"depth\": %f,\n", sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
-        fprintf(out, "            \"pointCloudIndex\": %f,\n", pt[3] );
+        fprintf(out, "            \"pointCloudIndex\": %d,\n", (int) pt[3] );
         fprintf(out, "            \"eqrPixels\": [ \n");
         fprintf(out, "                 %f, \n", pixels[0] );
         fprintf(out, "                 %f \n", pixels[1] );
