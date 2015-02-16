@@ -41,6 +41,32 @@
 using namespace std;
 using namespace cv;
 
+
+/*********************************************************************
+* Split an input string with a delimiter and fill a string vector
+*
+*********************************************************************
+*/
+static bool split ( const std::string src, const std::string& delim, std::vector<std::string>& vec_value )
+{
+    bool bDelimiterExist = false;
+    if ( !delim.empty() )
+    {
+        vec_value.clear();
+        std::string::size_type start = 0;
+        std::string::size_type end = std::string::npos -1;
+        while ( end != std::string::npos )
+        {
+            end = src.find ( delim, start );
+            vec_value.push_back ( src.substr ( start, end - start ) );
+            start = end + delim.size();
+        }
+        if ( vec_value.size() >= 2 )
+            bDelimiterExist = true;
+    }
+    return bDelimiterExist;
+}
+
 /*********************************************************************
 *  project point cloud on panorama
 *
@@ -404,6 +430,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
     // read data files
     double x,y,z;
     unsigned int r, g, b;
+    unsigned int nb_point = 0;
 
     // skip header and go to line (first 10 lines of file)
     bool  bReadHeader = false;
@@ -420,6 +447,16 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
             bReadHeader = true;
         }
 
+        // read some header informations
+        std::vector < string > splitted_line;
+        split(line, " ", splitted_line);
+
+        if( splitted_line.size() >= 3 )
+        {
+            if(splitted_line[0] == "element" && splitted_line[1] =="vertex")
+              nb_point = atoi( splitted_line[2].c_str() );
+        }
+
         if( !bReadHeader )
             ++headerSize ;
 
@@ -430,8 +467,8 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
             return false;
         }
 
-        // if we skipped header, load point cloud.
-        if( bReadHeader && headerSize == 10 )
+        // if we read header, load point cloud.
+        if( bReadHeader && headerSize == 10 && pointAndColor.size() < nb_point )
         {
             data >> x >> y >> z >> r >> g >> b ;
 
