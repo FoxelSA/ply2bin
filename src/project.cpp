@@ -103,8 +103,8 @@ bool projectPointCloud (
               lf_Real_t  ug = -1.0;
               lf_Real_t  vg = -1.0;
 
-              //  if depth > 0, point could be seen from camera j
-              if( cpt == 0 && depth > 1.0e-6  && sqrt(X_C[0] * X_C[0] + X_C[1]*X_C[1] + X_C[2]*X_C[2]) < 100.0 )
+              //  if depth > 0, point could be seen from camera j. Exclude point too far ( > 30.0 meter from rig)
+              if( cpt == 0 && depth > 1.0e-6  && sqrt(X_C[0] * X_C[0] + X_C[1]*X_C[1] + X_C[2]*X_C[2]) < 30.0 )
               {
                   double  PX0 = sd.P[0] * X[0] + sd.P[1] * X[1] + sd.P[2 ] * X[2] + sd.P[3 ] * X[3];
                   double  PX1 = sd.P[4] * X[0] + sd.P[5] * X[1] + sd.P[6 ] * X[2] + sd.P[7 ] * X[3];
@@ -171,6 +171,7 @@ bool projectPointCloud (
                           point.push_back( xrig );
                           point.push_back( yrig );
                           point.push_back( zrig );
+                          point.push_back( i );
 
                           pointAndPixels.push_back( std::make_pair( point, pixels ) );
 
@@ -225,12 +226,7 @@ void  exportToJson ( const char * jsonName,
         fprintf(out, "        {\n");
 
         fprintf(out, "            \"depth\": %f,\n", sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
-        fprintf(out, "            \"pointCloudIndex\": %d,\n", i );
-        fprintf(out, "            \"coordinate\": [ \n");
-        fprintf(out, "                 %f,\n", pt[0] );
-        fprintf(out, "                 %f,\n", pt[1] );
-        fprintf(out, "                 %f \n", pt[2] );
-        fprintf(out, "             ],\n");
+        fprintf(out, "            \"pointCloudIndex\": %f,\n", pt[3] );
         fprintf(out, "            \"eqrPixels\": [ \n");
         fprintf(out, "                 %f, \n", pixels[0] );
         fprintf(out, "                 %f \n", pixels[1] );
