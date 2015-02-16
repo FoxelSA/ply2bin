@@ -130,13 +130,13 @@ bool projectPointCloud (
 * Given a list of 3D point and corresponding pixels on stiched EQR panorama,
 * export theses informations to a json file.
 *
-* \param jsonName         Name of json file in c-string array
+* \param poseName         Name of the pose file. JSON export will have the same
 * \param pointAndPixels   List of 3D points and associated EQR pixels
 *
 * \return  Nothing
 */
 
-void  exportToJson ( const char * jsonName,
+void  exportToJson ( const std::string  poseName,
                      std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels
 );
 
@@ -216,7 +216,7 @@ bool loadPointCloud ( char * fileName ,
 * \return  bool value telling if the loading was sucessfull or not.
 */
 
-bool  loadRigPose ( const char * fileName,
+bool  loadRigPose ( const std::string & fileName,
                     vector< std::vector<double> > & rigPose );
 
 #endif /* PROJECT_HPP_ */

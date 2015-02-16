@@ -232,12 +232,22 @@ bool projectPointCloud (
 *
 **********************************************************************/
 
-void  exportToJson ( const char * jsonName,
+void  exportToJson (  const std::string  poseFile,
                       std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels)
 {
+    // extract pose basename
+    std::string  poseBaseName;
+    std::vector < std::string >  splitted_name_slash;
+    split( poseFile, "/", splitted_name_slash);
+    poseBaseName = splitted_name_slash[ splitted_name_slash.size() -1 ];
+
+    // remove extension and add json extension
+    std::vector < std::string >  splitted_name;
+    split( poseBaseName, ".", splitted_name);
+    std::string  jsonFile = splitted_name[splitted_name.size()-2] + ".json";
 
     // create export stream
-    std::string  outpath( jsonName );
+    std::string  outpath( jsonFile.c_str() );
 
     FILE *out;
     out = fopen(outpath.c_str(), "w");
@@ -501,15 +511,15 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
 *
 **********************************************************************/
 
-bool  loadRigPose ( const char * fileName, vector< std::vector<double> > & rigPose )
+bool  loadRigPose ( const std::string & fileName, vector< std::vector<double> > & rigPose )
 {
 
    // load pose
-   ifstream pose(fileName);
+   ifstream pose(fileName.c_str());
 
    //check if file exist for reading
     if( pose == NULL){
-        fprintf(stderr, "couldn't open pose file %s \n ", fileName);
+        fprintf(stderr, "couldn't open pose file %s \n ", fileName.c_str() );
         return false;
     }
 
