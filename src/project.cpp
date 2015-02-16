@@ -251,7 +251,9 @@ void  exportToJson ( const char * jsonName,
 *
 **********************************************************************/
 
-bool  loadCalibrationData( std::vector < sensorData > & vec_sensorData )
+bool  loadCalibrationData( std::vector < sensorData > & vec_sensorData,
+                           const std::string & sMountPoint,
+                           const std::string & smacAddress)
 {
 
     /* Key/value-file descriptor */
@@ -259,11 +261,9 @@ bool  loadCalibrationData( std::vector < sensorData > & vec_sensorData )
     lf_Size_t       lfChannels=0;
 
     /* Creation and verification of the descriptor */
-    std::string sMountPoint = "/data/";
     char *c_data = new char[sMountPoint.length() + 1];
     std::strcpy(c_data, sMountPoint.c_str());
 
-    std::string smacAddress = "00-0E-64-08-1C-D2";
     char *c_mac = new char[smacAddress.length() + 1];
     std::strcpy(c_mac, smacAddress.c_str());
 

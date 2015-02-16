@@ -151,11 +151,15 @@ void  exportToJson ( const char * jsonName,
 * the point cloud projection on the panorama.
 *
 * \param vec_sensorData   Array used to store the sensor calibration information.
+* \param sMountPoint      Camera folder mount point
+* \param smacAddress      Elphel camera's mac address
 *
 * \return  bool value telling if the loading was sucessfull or not.
 */
 
-bool  loadCalibrationData( std::vector < sensorData > & vec_sensorData );
+bool  loadCalibrationData(std::vector < sensorData > & vec_sensorData,
+                          const std::string & sMountPoint,
+                          const std::string & smacAddress);
 
 /*********************************************************************
 *  load point cloud

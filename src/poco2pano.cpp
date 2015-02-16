@@ -97,20 +97,28 @@ using namespace cv;
 int main(int argc, char** argv) {
 
     /* Usage branch */
-    if ( ( argc!= 3 ) || argc<=1 || strcmp( argv[1], "help" ) == 0  ) {
+    if ( ( argc!= 6 ) || argc<=1 || strcmp( argv[1], "help" ) == 0  ) {
 
         /* Display help */
         printf( "Usage :\n\n" );
-        printf( "poco2pano   point_cloud    json  \n\n");
+        printf( "poco2pano   point_cloud    json   pose_file   mount_point   mac_adress \n\n");
         printf( "point_cloud   = name of the point cloud  \n" );
         printf( "json          = name of the json file \n");
+        printf( "pose_file     = complete path of the pose file \n");
+        printf( "mount_point   = mount point of camera folder \n");
+        printf( "mac_address   = camera mac address \n");
 
         return 0;
 
     } else {
         /// now extract calibration information related to each module ///
+        std::string  sMountPoint = argv[4];
+        std::string  smacAddress = argv[5];
+
         std::vector < sensorData > vec_sensorData;
-        bool bLoadedCalibData = loadCalibrationData( vec_sensorData );
+        bool bLoadedCalibData = loadCalibrationData( vec_sensorData,
+                                                     sMountPoint,
+                                                     smacAddress );
 
         if( !bLoadedCalibData )
         {
@@ -136,7 +144,7 @@ int main(int argc, char** argv) {
         }
 
         /// load panorama pose ///
-        std::string  posePath = "/home/sflotron/foxel/test/muref_crown_25pano/test_export/SfM_output/rigs/10.txt";
+        std::string  posePath = argv[3];
         vector< std::vector<double> > rigPose;
 
         bool bLoadPose = loadRigPose ( posePath.c_str(), rigPose);
