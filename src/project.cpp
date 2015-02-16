@@ -447,7 +447,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
             bReadHeader = true;
         }
 
-        // read some header informations
+        // read some header informations (the number of 3D points)
         std::vector < string > splitted_line;
         split(line, " ", splitted_line);
 
@@ -486,11 +486,11 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
     // close stream
     data.close();
 
-    if( pointAndColor.size () > 0 )
+    if( pointAndColor.size () != nb_point )
         return true ;
     else
     {
-        std::cerr << "Point cloud is empty " << std::endl;
+        std::cerr << "Something went wrong during the loading of the point cloud" << std::endl;
         return false ;
     }
 
