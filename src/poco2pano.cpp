@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
 
         /* Display help */
         printf( "Usage :\n\n" );
-        printf( "poco2pano   point_cloud    json   pose_file   mount_point   mac_adress \n\n");
+        printf( "poco2pano   point_cloud   pose_file   mount_point   mac_adress \n\n");
         printf( "point_cloud   = name of the point cloud  \n" );
         printf( "pose_file     = complete path of the pose file \n");
         printf( "mount_point   = mount point of camera folder \n");
