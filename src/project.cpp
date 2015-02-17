@@ -259,9 +259,18 @@ void  exportToJson (  const std::string  poseFile,
     //create header
     fprintf(out, "{\n");
     fprintf(out, "   \"nb_points\": %ld,\n", pointAndPixels.size());
-    fprintf(out, "   \"rig_center\": [ %lf,\n", rigPose[3][0] );
-    fprintf(out, "   \"                %lf,\n", rigPose[3][1] );
-    fprintf(out, "   \"                %lf \n", rigPose[3][2] );
+    fprintf(out, "   \"rotation \": [ %lf,\n", rigPose[0][0] );
+    fprintf(out, "                   %lf,\n", rigPose[0][1] );
+    fprintf(out, "                   %lf,\n", rigPose[0][2] );
+    fprintf(out, "                   %lf,\n", rigPose[1][0] );
+    fprintf(out, "                   %lf,\n", rigPose[1][1] );
+    fprintf(out, "                   %lf,\n", rigPose[1][2] );
+    fprintf(out, "                   %lf,\n", rigPose[2][0] );
+    fprintf(out, "                   %lf,\n", rigPose[2][1] );
+    fprintf(out, "                   %lf ], \n", rigPose[2][2] );
+    fprintf(out, "   \"center\": [   %lf,\n", rigPose[3][0] );
+    fprintf(out, "                   %lf,\n", rigPose[3][1] );
+    fprintf(out, "                   %lf \n", rigPose[3][2] );
     fprintf(out, "             ], \n");
     fprintf(out, "   \"points\": [\n");
 
