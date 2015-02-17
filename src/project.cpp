@@ -241,6 +241,10 @@ void  exportToJson (  const std::string  poseFile,
     split( poseFile, "/", splitted_name_slash);
     poseBaseName = splitted_name_slash[ splitted_name_slash.size() -1 ];
 
+    // load rig pose
+    std::vector < std::vector <double > > rigPose;
+    bool  bLoadedPose  = loadRigPose ( poseFile, rigPose );
+
     // remove extension and add json extension
     std::vector < std::string >  splitted_name;
     split( poseBaseName, ".", splitted_name);
@@ -255,6 +259,10 @@ void  exportToJson (  const std::string  poseFile,
     //create header
     fprintf(out, "{\n");
     fprintf(out, "   \"nb_points\": %ld,\n", pointAndPixels.size());
+    fprintf(out, "   \"rig_center\": [ %lf,\n", rigPose[3][0] );
+    fprintf(out, "   \"                %lf,\n", rigPose[3][1] );
+    fprintf(out, "   \"                %lf \n", rigPose[3][2] );
+    fprintf(out, "             ], \n");
     fprintf(out, "   \"points\": [\n");
 
     // export points and coordinates
