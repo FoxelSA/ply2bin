@@ -115,7 +115,7 @@ bool projectPointCloud (
 
           // count the number of subcam in which point is apparing
           lf_Size_t cpt = 0;
-          const lf_Real_t  max_depth = 25.0;
+          const lf_Real_t  max_depth = 1.0e10;
 
           for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j )
           {
@@ -456,6 +456,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
 
     // read data files
     double x,y,z;
+    double nx, ny, nz;
     unsigned int r, g, b;
     unsigned int nb_point = 0;
 
@@ -488,7 +489,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
             ++headerSize ;
 
         // for now, read only ply file with 3d coordinate and color
-        if( headerSize != 10 && bReadHeader )
+        if( headerSize != 10 && headerSize !=29 && bReadHeader )
         {
             std::cerr << "Ply file not yet supported ! Header should have 10 lines and we have " << headerSize << " lines " << std::endl;
             return false;
@@ -507,6 +508,21 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
             color.push_back(r);    color.push_back(g);    color.push_back(b);
 
             pointAndColor.push_back(std::make_pair(position, color));
+        }
+
+        // if we read header, load point cloud.
+        if( bReadHeader && headerSize == 29 && pointAndColor.size() < nb_point )
+        {
+          data >> x >> y >> z >> nx >> ny >> nz >> r >> g >> b ;
+
+          // store point information in big vector
+          vector <double>  position;
+          vector <unsigned int> color;
+
+          position.push_back(x); position.push_back(y); position.push_back(z);
+          color.push_back(r);    color.push_back(g);    color.push_back(b);
+
+          pointAndColor.push_back(std::make_pair(position, color));
         }
     }
 
