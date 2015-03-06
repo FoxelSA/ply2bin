@@ -489,7 +489,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
             ++headerSize ;
 
         // for now, read only ply file with 3d coordinate and color
-        if( headerSize != 10 && headerSize !=29 && bReadHeader )
+        if( headerSize != 10 && headerSize != 13 && headerSize !=29 && bReadHeader )
         {
             std::cerr << "Ply file not yet supported ! Header should have 10 lines and we have " << headerSize << " lines " << std::endl;
             return false;
@@ -511,7 +511,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
         }
 
         // if we read header, load point cloud.
-        if( bReadHeader && headerSize == 29 && pointAndColor.size() < nb_point )
+        if( bReadHeader && (headerSize == 13 || headerSize == 29) && pointAndColor.size() < nb_point )
         {
           data >> x >> y >> z >> nx >> ny >> nz >> r >> g >> b ;
 
