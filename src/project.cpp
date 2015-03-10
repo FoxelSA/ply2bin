@@ -308,8 +308,9 @@ void  pointCloudToJson ( const char * jsonName,
 
   //create header
   fprintf(out, "{\n");
-  fprintf(out, "   \"nb_points\": %ld,\n", pointAndColor.size());
-  fprintf(out, "   \"points\": [\n");
+  fprintf(out, "\"nb_points\": %ld,\n", pointAndColor.size());
+  fprintf(out, "\"points_format\":  [\"x\",\"y\",\"z\"],\n");
+  fprintf(out, "\"points\": [\n");
 
   // export points and coordinates
   for( int i = 0; i < (int) pointAndColor.size() ; ++i)
@@ -317,17 +318,14 @@ void  pointCloudToJson ( const char * jsonName,
     std::vector <double>        pt      = pointAndColor[i].first;
     std::vector <unsigned int>  color   = pointAndColor[i].second;
 
-    fprintf(out, "        {\n");
-    fprintf(out, "            \"coordinates\": [ \n");
-    fprintf(out, "                 %f, \n", pt[0] );
-    fprintf(out, "                 %f, \n", pt[1] );
-    fprintf(out, "                 %f \n" , pt[2] );
-    fprintf(out, "             ] \n");
+    fprintf(out, "%f,", pt[0] );
+    fprintf(out, "%f,", pt[1] );
+    fprintf(out, "%f" , pt[2] );
 
     if ( i < (int) pointAndColor.size()-1 )
-        fprintf(out, "        }, \n");
+        fprintf(out, ",\n");
     else
-        fprintf(out, "        } \n");
+        fprintf(out, "\n");
   }
 
   fprintf(out, "    ]\n");
