@@ -172,7 +172,7 @@ int main(int argc, char** argv) {
         }
 
         // export point cloud to json
-        exportToJson( argv[2] , pointAndPixels );
+        exportToJson( argv[2] , vec_sensorData, pointAndPixels );
         return 0;
     }
 

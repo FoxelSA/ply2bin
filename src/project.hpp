@@ -131,12 +131,14 @@ bool projectPointCloud (
 * export theses informations to a json file.
 *
 * \param poseName         Name of the pose file. JSON export will have the same
+* \param vec_sensorData   Calibration informations
 * \param pointAndPixels   List of 3D points and associated EQR pixels
 *
 * \return  Nothing
 */
 
 void  exportToJson ( const std::string  poseName,
+                     const std::vector < sensorData > & vec_sensorData,
                      std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels
 );
 

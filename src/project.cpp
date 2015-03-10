@@ -233,6 +233,7 @@ bool projectPointCloud (
 **********************************************************************/
 
 void  exportToJson (  const std::string  poseFile,
+                      const std::vector < sensorData > & vec_sensorData,
                       std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels)
 {
     // extract pose basename
@@ -256,23 +257,15 @@ void  exportToJson (  const std::string  poseFile,
     FILE *out;
     out = fopen(outpath.c_str(), "w");
 
+    // extract panorama width in order to convert coordinate in latitude-longitude
+    const size_t ImageFullWidth = vec_sensorData[0].lfImageFullWidth;
+    const double radPerPix = LG_PI2 / (double) ImageFullWidth;
+
     //create header
     fprintf(out, "{\n");
-    fprintf(out, "   \"nb_points\": %ld,\n", pointAndPixels.size());
-    fprintf(out, "   \"rotation \": [ %lf,\n", rigPose[0][0] );
-    fprintf(out, "                   %lf,\n", rigPose[0][1] );
-    fprintf(out, "                   %lf,\n", rigPose[0][2] );
-    fprintf(out, "                   %lf,\n", rigPose[1][0] );
-    fprintf(out, "                   %lf,\n", rigPose[1][1] );
-    fprintf(out, "                   %lf,\n", rigPose[1][2] );
-    fprintf(out, "                   %lf,\n", rigPose[2][0] );
-    fprintf(out, "                   %lf,\n", rigPose[2][1] );
-    fprintf(out, "                   %lf ], \n", rigPose[2][2] );
-    fprintf(out, "   \"center\": [   %lf,\n", rigPose[3][0] );
-    fprintf(out, "                   %lf,\n", rigPose[3][1] );
-    fprintf(out, "                   %lf \n", rigPose[3][2] );
-    fprintf(out, "             ], \n");
-    fprintf(out, "   \"points\": [\n");
+    fprintf(out, "\"nb_points\": %ld,\n", pointAndPixels.size());
+    fprintf(out, "\"points_format\":  [\"depth\", \"index\", \"theta\", \"phi\"],\n");
+    fprintf(out, "\"points\":  [\n");
 
     // export points and coordinates
     for( int i = 0; i < (int) pointAndPixels.size() ; ++i)
@@ -280,22 +273,18 @@ void  exportToJson (  const std::string  poseFile,
         std::vector <double>  pt      = pointAndPixels[i].first;
         std::vector <double>  pixels  = pointAndPixels[i].second;
 
-        fprintf(out, "        {\n");
-
-        fprintf(out, "            \"depth\": %f,\n", sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
-        fprintf(out, "            \"pointCloudIndex\": %d,\n", (int) pt[3] );
-        fprintf(out, "            \"eqrPixels\": [ \n");
-        fprintf(out, "                 %f, \n", pixels[0] );
-        fprintf(out, "                 %f \n", pixels[1] );
-        fprintf(out, "             ] \n");
+        fprintf(out, "%f,", sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
+        fprintf(out, "%d,", (int) pt[3] );
+        fprintf(out, "%f,", pixels[0] * radPerPix );
+        fprintf(out, "%f", pixels[1] * radPerPix - 0.5 * LG_PI );
 
         if ( i < (int) pointAndPixels.size()-1 )
-             fprintf(out, "        }, \n");
+             fprintf(out, ",\n");
         else
-             fprintf(out, "        } \n");
+             fprintf(out, "\n");
     }
 
-    fprintf(out, "    ]\n");
+    fprintf(out, "]\n");
     fprintf(out, "}\n");
 
     // close stream
