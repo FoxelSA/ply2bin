@@ -89,7 +89,7 @@
 #include <tools.hpp>
 #include <gnomonic-all.h>
 
-#define DEBUG 1
+#define DEBUG 0
 
 using namespace std;
 using namespace cv;

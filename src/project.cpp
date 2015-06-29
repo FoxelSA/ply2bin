@@ -98,9 +98,18 @@ bool projectPointCloud (
 
     vector <double> cA = alignedPose[3];
 
+    // local correction of rig pose
+    double  Rcorr[3][3] = {
+        {  1.000, 0 * 0.008, -0 * 0.008 },
+        { -0 * 0.008, 1.000,  0.000 },
+        {  0 * 0.008, 0.000,  1.000 }
+    };
+
+    double tCorr[3] = { 0 * 0.048, 0 * 0.013, -0 * 0.244 } ;
+
 #if DEBUG
     // load image
-    std::string panoPath = "/data/structure/footage/00-0E-64-08-1B-6E/master/1428107987/stitch_selections/dav_2/stitched/result_1428108542_968867.tif";
+    std::string panoPath = "/data/structure/footage/00-0E-64-08-1B-6E/master/1429143317/segment/1429143318/stitch_selections/dav_2/stitched/result_1429143464_882930.tif";
     Mat pano_img;
     pano_img = imread(panoPath.c_str(), CV_LOAD_IMAGE_COLOR );
 #endif
@@ -110,37 +119,28 @@ bool projectPointCloud (
     {
           // retrieve point information
           vector <double> pos   = pointAndColor[i].first;
+          double xrig, yrig, zrig;
 
-          // compute transformation from aligned to reconstruction referential, i.e X_rec = R^T (X_95 + C_95) / scale ;
-          double R[3][3];
-
-          for( size_t k = 0; k < 3; ++k )
-              for( size_t l = 0; l < 3 ; ++l )
-              {
-                  R[k][l] = ( Rrig[k][0] * Ralign[l][0] + Rrig[k][1] * Ralign[l][1] + Rrig[k][2] * Ralign[l][2] ) / scale ;
-              }
-
-          double t[3];
-
-          for( size_t k = 0 ; k < 3 ; ++k )
-          {
-              double t0 = Rrig[k][0] * cRig[0] + Rrig[k][1] * cRig[1] + Rrig[k][2] * cRig[2];
-              double t1 = ( Rrig[k][0] * cA[0] + Rrig[k][1] * cA[1] + Rrig[k][2] * cA[2]) / scale ;
-              t[k] = t1 -t0;
-          }
-
-          // convert point cloud into rig referential, i.e. x_rig = R_rig ( x - C_rig )
           double  xcentered[3];
 
           xcentered[0] = pos[0];
           xcentered[1] = pos[1];
           xcentered[2] = pos[2];
 
-          double xrig = R[0][0] * xcentered[0] + R[0][1] * xcentered[1] + R[0][2] *  xcentered[2] + t[0];
-          double yrig = R[1][0] * xcentered[0] + R[1][1] * xcentered[1] + R[1][2] *  xcentered[2] + t[1];
-          double zrig = R[2][0] * xcentered[0] + R[2][1] * xcentered[1] + R[2][2] *  xcentered[2] + t[2];
+          // undo rotation and scaling that aligned point cloud
+          double x_pc = ( Ralign[0][0] * xcentered[0] + Ralign[1][0] * xcentered[1] + Ralign[2][0] *  xcentered[2] + cA[0]) / scale;
+          double y_pc = ( Ralign[0][1] * xcentered[0] + Ralign[1][1] * xcentered[1] + Ralign[2][1] *  xcentered[2] + cA[1]) / scale;
+          double z_pc = ( Ralign[0][2] * xcentered[0] + Ralign[1][2] * xcentered[1] + Ralign[2][2] *  xcentered[2] + cA[2]) / scale;
 
-          //std::cout << pos[0] << " " << pos[1] << " " << pos[2] << "    " << t[0] << " " << t[1] << " " << t[2] << "    " << xrig << " " << yrig << " " << zrig << std::endl;
+          // undo rotation and scaling that move point cloud
+          double x_tmp = Rcorr[0][0] * ( x_pc -tCorr[0])  + Rcorr[1][0] * ( y_pc -tCorr[1]) + Rcorr[2][0] *  ( z_pc -tCorr[2]) ;
+          double y_tmp = Rcorr[0][1] * ( x_pc -tCorr[0])  + Rcorr[1][1] * ( y_pc -tCorr[1]) + Rcorr[2][1] *  ( z_pc -tCorr[2]) ;
+          double z_tmp = Rcorr[0][2] * ( x_pc -tCorr[0])  + Rcorr[1][2] * ( y_pc -tCorr[1]) + Rcorr[2][2] *  ( z_pc -tCorr[2]) ;
+
+          // convert point cloud into rig referential, i.e. x_rig = R_rig ( x - C_rig )
+          xrig = Rrig[0][0] * (x_tmp -cRig[0]) + Rrig[0][1] * (y_tmp - cRig[1]) + Rrig[0][2] * ( z_tmp - cRig[2] ) ;
+          yrig = Rrig[1][0] * (x_tmp -cRig[0]) + Rrig[1][1] * (y_tmp - cRig[1]) + Rrig[1][2] * ( z_tmp - cRig[2] ) ;
+          zrig = Rrig[2][0] * (x_tmp -cRig[0]) + Rrig[2][1] * (y_tmp - cRig[1]) + Rrig[2][2] * ( z_tmp - cRig[2] ) ;
 
           const lf_Real_t  X[4] = { xrig, yrig, zrig, 1.0 };
 
@@ -228,10 +228,11 @@ bool projectPointCloud (
 
                           pixels.push_back(up + sd.lfXPosition);
                           pixels.push_back(vp + sd.lfYPosition);
+                          pixels.push_back( sqrt(xrig * xrig + yrig * yrig + zrig * zrig) );
 
-                          point.push_back( xrig );
-                          point.push_back( yrig );
-                          point.push_back( zrig );
+                          point.push_back( pos[0] );
+                          point.push_back( pos[1] );
+                          point.push_back( pos[2] );
                           point.push_back( i );
 
                           pointAndPixels.push_back( std::make_pair( point, pixels ) );
@@ -305,7 +306,7 @@ void  exportToJson (  const std::string  poseFile,
         std::vector <double>  pt      = pointAndPixels[i].first;
         std::vector <double>  pixels  = pointAndPixels[i].second;
 
-        fprintf(out, "%f,", scale * sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
+        fprintf(out, "%f,", scale * pixels[2] );
         fprintf(out, "%d,", (int) pt[3] );
         fprintf(out, "%f,", pixels[0] * radPerPix );
         fprintf(out, "%f,", pixels[1] * radPerPix - 0.5 * LG_PI );
@@ -512,7 +513,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
             ++headerSize ;
 
         // for now, read only ply file with 3d coordinate and color
-        if( headerSize != 10 && headerSize != 13 && headerSize !=29 && bReadHeader )
+        if( headerSize != 10 && headerSize != 13  && headerSize != 12 && headerSize !=29 && bReadHeader )
         {
             std::cerr << "Ply file not yet supported ! Header should have 10 lines and we have " << headerSize << " lines " << std::endl;
             return false;
