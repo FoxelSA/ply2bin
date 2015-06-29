@@ -76,6 +76,8 @@ bool projectPointCloud (
            std::vector < std::pair < vector <double >, vector <double> > > & pointAndPixels,
            const vector< std::pair < vector <double >, vector<unsigned int> > > & pointAndColor,
            const std::vector < std::vector <double> > & rigPose,
+           const std::vector < std::vector <double> > & alignedPose,
+           const double & scale,
            const std::vector < sensorData > & vec_sensorData )
 {
     // extract rig rotation and center
@@ -87,9 +89,18 @@ bool projectPointCloud (
 
     vector <double> cRig = rigPose[3];
 
+    // extract aligned transformation
+    double  Ralign[3][3] = {
+        { alignedPose[0][0], alignedPose[0][1], alignedPose[0][2] },
+        { alignedPose[1][0], alignedPose[1][1], alignedPose[1][2] },
+        { alignedPose[2][0], alignedPose[2][1], alignedPose[2][2] }
+    };
+
+    vector <double> cA = alignedPose[3];
+
 #if DEBUG
     // load image
-    std::string panoPath = "/home/sflotron/foxel/test/muref_crown_25pano/result_1404374551_319830.tif";
+    std::string panoPath = "/data/structure/footage/00-0E-64-08-1B-6E/master/1428107987/stitch_selections/dav_2/stitched/result_1428108542_968867.tif";
     Mat pano_img;
     pano_img = imread(panoPath.c_str(), CV_LOAD_IMAGE_COLOR );
 #endif
@@ -97,19 +108,39 @@ bool projectPointCloud (
     // project point cloud into panorama
     for( size_t i = 0 ; i < pointAndColor.size(); ++i )
     {
-          // retreive point information
+          // retrieve point information
           vector <double> pos   = pointAndColor[i].first;
+
+          // compute transformation from aligned to reconstruction referential, i.e X_rec = R^T (X_95 + C_95) / scale ;
+          double R[3][3];
+
+          for( size_t k = 0; k < 3; ++k )
+              for( size_t l = 0; l < 3 ; ++l )
+              {
+                  R[k][l] = ( Rrig[k][0] * Ralign[l][0] + Rrig[k][1] * Ralign[l][1] + Rrig[k][2] * Ralign[l][2] ) / scale ;
+              }
+
+          double t[3];
+
+          for( size_t k = 0 ; k < 3 ; ++k )
+          {
+              double t0 = Rrig[k][0] * cRig[0] + Rrig[k][1] * cRig[1] + Rrig[k][2] * cRig[2];
+              double t1 = ( Rrig[k][0] * cA[0] + Rrig[k][1] * cA[1] + Rrig[k][2] * cA[2]) / scale ;
+              t[k] = t1 -t0;
+          }
 
           // convert point cloud into rig referential, i.e. x_rig = R_rig ( x - C_rig )
           double  xcentered[3];
 
-          xcentered[0] = pos[0] - cRig[0];
-          xcentered[1] = pos[1] - cRig[1];
-          xcentered[2] = pos[2] - cRig[2];
+          xcentered[0] = pos[0];
+          xcentered[1] = pos[1];
+          xcentered[2] = pos[2];
 
-          double xrig = Rrig[0][0] * xcentered[0] + Rrig[0][1] * xcentered[1] + Rrig[0][2] *  xcentered[2];
-          double yrig = Rrig[1][0] * xcentered[0] + Rrig[1][1] * xcentered[1] + Rrig[1][2] *  xcentered[2];
-          double zrig = Rrig[2][0] * xcentered[0] + Rrig[2][1] * xcentered[1] + Rrig[2][2] *  xcentered[2];
+          double xrig = R[0][0] * xcentered[0] + R[0][1] * xcentered[1] + R[0][2] *  xcentered[2] + t[0];
+          double yrig = R[1][0] * xcentered[0] + R[1][1] * xcentered[1] + R[1][2] *  xcentered[2] + t[1];
+          double zrig = R[2][0] * xcentered[0] + R[2][1] * xcentered[1] + R[2][2] *  xcentered[2] + t[2];
+
+          //std::cout << pos[0] << " " << pos[1] << " " << pos[2] << "    " << t[0] << " " << t[1] << " " << t[2] << "    " << xrig << " " << yrig << " " << zrig << std::endl;
 
           const lf_Real_t  X[4] = { xrig, yrig, zrig, 1.0 };
 
@@ -234,6 +265,7 @@ bool projectPointCloud (
 
 void  exportToJson (  const std::string  poseFile,
                       const std::vector < sensorData > & vec_sensorData,
+                      const double  scale,
                       std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels)
 {
     // extract pose basename
@@ -264,7 +296,7 @@ void  exportToJson (  const std::string  poseFile,
     //create header
     fprintf(out, "{\n");
     fprintf(out, "\"nb_points\": %ld,\n", pointAndPixels.size());
-    fprintf(out, "\"points_format\":  [\"depth\", \"index\", \"theta\", \"phi\"],\n");
+    fprintf(out, "\"points_format\":  [\"depth\", \"index\", \"theta\", \"phi\", \"x\", \"y\", \"z\"],\n");
     fprintf(out, "\"points\":  [\n");
 
     // export points and coordinates
@@ -273,10 +305,14 @@ void  exportToJson (  const std::string  poseFile,
         std::vector <double>  pt      = pointAndPixels[i].first;
         std::vector <double>  pixels  = pointAndPixels[i].second;
 
-        fprintf(out, "%f,", sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
+        fprintf(out, "%f,", scale * sqrt(pt[0] * pt[0] + pt[1] * pt[1] + pt[2] * pt[2]) );
         fprintf(out, "%d,", (int) pt[3] );
         fprintf(out, "%f,", pixels[0] * radPerPix );
-        fprintf(out, "%f", pixels[1] * radPerPix - 0.5 * LG_PI );
+        fprintf(out, "%f,", pixels[1] * radPerPix - 0.5 * LG_PI );
+        fprintf(out, "%f,", pt[0] );
+        fprintf(out, "%f,", pt[1] );
+        fprintf(out, "%f",  pt[2] );
+
 
         if ( i < (int) pointAndPixels.size()-1 )
              fprintf(out, ",\n");
@@ -500,7 +536,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
         // if we read header, load point cloud.
         if( bReadHeader && (headerSize == 13 || headerSize == 29) && pointAndColor.size() < nb_point )
         {
-          data >> x >> y >> z >> nx >> ny >> nz >> r >> g >> b ;
+          data >> x >> y >> z >> r >> g >> b >> nx >> ny >> nz ;
 
           // store point information in big vector
           vector <double>  position;

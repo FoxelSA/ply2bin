@@ -89,7 +89,7 @@
 #include <tools.hpp>
 #include <gnomonic-all.h>
 
-#define DEBUG 0
+#define DEBUG 1
 
 using namespace std;
 using namespace cv;
@@ -108,6 +108,8 @@ using namespace cv;
 * \param pointAndPixels   List of 3D points and associated EQR pixels
 * \param pointAndColor    List of 3D points and associated color
 * \param rigPose          4x3 matrix containing Rotation (first 3X3 block) and translation (line 4)
+* \param alignedPose      4x3 matrix containing Rotation (first 3X3 block) and translation (line 4) that aligne point cloud in MN95
+* \param scale            scale factor used in alignment transformation
 * \param vec_sensorData   Calibration information for each sensor
 *
 * \return  bool value indicating if the projection was sucessfull or not
@@ -117,8 +119,9 @@ bool projectPointCloud (
            std::vector < std::pair < vector <double >, vector <double> > > & pointAndPixels,
            const vector< std::pair < vector <double >, vector<unsigned int> > > & pointAndColor,
            const std::vector < std::vector <double> > & rigPose,
-           const std::vector < sensorData > & vec_sensorData
-);
+           const std::vector < std::vector <double> > & alingnedPose,
+           const double & scale,
+           const std::vector < sensorData > & vec_sensorData );
 
 /*********************************************************************
 *  export projected point cloud to json file
@@ -132,14 +135,16 @@ bool projectPointCloud (
 *
 * \param poseName         Name of the pose file. JSON export will have the same
 * \param vec_sensorData   Calibration informations
+* \param scale            Scale factor to obtain metric point cloud
 * \param pointAndPixels   List of 3D points and associated EQR pixels
 *
 * \return  Nothing
 */
 
-void  exportToJson ( const std::string  poseName,
-                     const std::vector < sensorData > & vec_sensorData,
-                     std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels
+void  exportToJson (  const std::string  poseFile,
+                      const std::vector < sensorData > & vec_sensorData,
+                      const double  scale,
+                      std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels
 );
 
 /*********************************************************************

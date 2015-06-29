@@ -97,13 +97,15 @@ using namespace cv;
 int main(int argc, char** argv) {
 
     /* Usage branch */
-    if ( ( argc!= 5 ) || argc<=1 || strcmp( argv[1], "help" ) == 0  ) {
+    if ( ( argc!= 7 ) || argc<=1 || strcmp( argv[1], "help" ) == 0  ) {
 
         /* Display help */
         printf( "Usage :\n\n" );
-        printf( "poco2pano   point_cloud   pose_file   mount_point   mac_adress \n\n");
+        printf( "poco2pano   point_cloud   pose_file  aligned_file  scale_file  mount_point   mac_adress \n\n");
         printf( "point_cloud   = name of the point cloud  \n" );
         printf( "pose_file     = complete path of the pose file \n");
+        printf( "aligned_file  = complete path of the alignement transformation \n");
+        printf( "scale_file    = complete path of the scaling matrix\n");
         printf( "mount_point   = mount point of camera folder \n");
         printf( "mac_address   = camera mac address \n");
 
@@ -111,8 +113,8 @@ int main(int argc, char** argv) {
 
     } else {
         // now extract calibration information related to each module
-        std::string  sMountPoint = argv[3];
-        std::string  smacAddress = argv[4];
+        std::string  sMountPoint = argv[5];
+        std::string  smacAddress = argv[6];
 
         std::vector < sensorData > vec_sensorData;
         bool bLoadedCalibData = loadCalibrationData( vec_sensorData,
@@ -142,13 +144,39 @@ int main(int argc, char** argv) {
             std::cout << "Loaded point cloud " << std::endl;
         }
 
+        // load scale factor
+        ifstream pose(argv[4]);
+
+        //check if file exist for reading
+         if( pose == NULL){
+             fprintf(stderr, "couldn't open scale file %s \n ", argv[4] );
+             return false;
+         }
+
+         // read pose information
+         double x,y,z;
+         while (pose >> x >> y >> z){
+           std::cout << "load scale file" << std::endl;
+         }
+
+         //close stream
+         pose.close();
+
+         const double scale = (x + y + z) / 3.0;
+
         // load panorama pose
         std::string  posePath = argv[2];
         vector< std::vector<double> > rigPose;
 
         bool bLoadPose = loadRigPose ( posePath, rigPose);
 
-        if( !bLoadPose )
+        // load alignement transformation
+        std::string  alignedPath = argv[3];
+        vector< std::vector<double> > alignedPose;
+
+        bool bLoadAligned = loadRigPose ( alignedPath, alignedPose);
+
+        if( !bLoadPose || !bLoadAligned )
         {
             return EXIT_FAILURE;
         }
@@ -159,7 +187,7 @@ int main(int argc, char** argv) {
 
         // project point cloud on panorama
         std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels;
-        bool  bProject = projectPointCloud ( pointAndPixels, pointAndColor, rigPose, vec_sensorData );
+        bool  bProject = projectPointCloud ( pointAndPixels, pointAndColor, rigPose, alignedPose, scale, vec_sensorData );
 
         if( !bProject )
         {
@@ -172,7 +200,7 @@ int main(int argc, char** argv) {
         }
 
         // export point cloud to json
-        exportToJson( argv[2] , vec_sensorData, pointAndPixels );
+        exportToJson( argv[2] , vec_sensorData, scale, pointAndPixels );
         return 0;
     }
 
