@@ -109,7 +109,7 @@ bool projectPointCloud (
 
 #if DEBUG
     // load image
-    std::string panoPath = "/data/structure/footage/00-0E-64-08-1B-6E/master/1429143317/segment/1429143318/stitch_selections/dav_2/stitched/result_1429143464_882930.tif";
+    std::string panoPath = "/data/structure/footage/00-0E-64-08-1B-6E/master/1429143317/segment/1429143318/stitch_selections/dav_3/stitched/result_1429143335_882930.tif";
     Mat pano_img;
     pano_img = imread(panoPath.c_str(), CV_LOAD_IMAGE_COLOR );
 #endif
@@ -310,8 +310,8 @@ void  exportToJson (  const std::string  poseFile,
         fprintf(out, "%d,", (int) pt[3] );
         fprintf(out, "%f,", pixels[0] * radPerPix );
         fprintf(out, "%f,", pixels[1] * radPerPix - 0.5 * LG_PI );
-        fprintf(out, "%f,", pt[0] );
-        fprintf(out, "%f,", pt[1] );
+        fprintf(out, "%f,", pt[0] + 2501600 );
+        fprintf(out, "%f,", pt[1] + 1117500 );
         fprintf(out, "%f",  pt[2] );
 
 
