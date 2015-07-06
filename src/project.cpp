@@ -467,7 +467,7 @@ bool  loadCalibrationData( std::vector < sensorData > & vec_sensorData,
   *
   **********************************************************************/
 
-bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, vector<unsigned int> > > & pointAndColor )
+bool loadPointCloud ( const char * fileName ,   vector< std::pair < vector <double >, vector<unsigned int> > > & pointAndColor )
 {
     // create file stream
     ifstream data( fileName );
@@ -480,12 +480,13 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
 
     // read data files
     double x,y,z;
-    double nx, ny, nz;
     unsigned int r, g, b;
     unsigned int nb_point = 0;
+    std::vector < std::pair<size_t, std::string> > order;
 
     // skip header and go to line (first 10 lines of file)
     bool  bReadHeader = false;
+    size_t  cprop=0;
     lf_Size_t  headerSize = 0;
     while( !data.eof() )
     {
@@ -510,19 +511,91 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
         }
 
         if( !bReadHeader )
-            ++headerSize ;
-
-        // for now, read only ply file with 3d coordinate and color
-        if( headerSize != 10 && headerSize != 13  && headerSize != 12 && headerSize !=29 && bReadHeader )
         {
-            std::cerr << "Ply file not yet supported ! Header should have 10 lines and we have " << headerSize << " lines " << std::endl;
-            return false;
+          if(splitted_line[0] != "comment" || splitted_line[0]!="obj_info")
+            ++headerSize ;
+        }
+
+        // detect x,y,z coordinate as colors
+        if( splitted_line[0]=="property")
+        {
+            // detect x coordinate flag
+            if( (splitted_line[1]=="float" || splitted_line[1] =="double")  && splitted_line[2]=="x" )
+            {
+               order.push_back( std::make_pair(cprop, splitted_line[2]) );
+            }
+
+            // detect y coordinate flag
+            if( (splitted_line[1]=="float" || splitted_line[1] =="double") && splitted_line[2]=="y" )
+            {
+               order.push_back( std::make_pair(cprop, splitted_line[2]) );
+            }
+
+            // detect z coordinate flag
+            if( (splitted_line[1]=="float" || splitted_line[1] =="double") && splitted_line[2]=="z" )
+            {
+               order.push_back( std::make_pair(cprop, splitted_line[2]) );
+            }
+
+            //detect color
+            // detect red color
+            if( splitted_line[1]=="uchar" && ( splitted_line[2]=="red" || splitted_line[2]=="diffuse_red") )
+            {
+               order.push_back( std::make_pair(cprop, splitted_line[2]) );
+            }
+
+            // detect green color
+            if( splitted_line[1]=="uchar" && ( splitted_line[2]=="green" || splitted_line[2]=="diffuse_green") )
+            {
+               order.push_back( std::make_pair(cprop, splitted_line[2]) );
+            }
+
+            // detect blue color
+            if( splitted_line[1]=="uchar" && ( splitted_line[2]=="blue" || splitted_line[2]=="diffuse_blue") )
+            {
+               order.push_back( std::make_pair(cprop, splitted_line[2]) );
+            }
+
+            ++cprop;
         }
 
         // if we read header, load point cloud.
-        if( bReadHeader && headerSize == 10 && pointAndColor.size() < nb_point )
+        if( bReadHeader && pointAndColor.size() < nb_point && order.size() == 6 && line != "end_header")
         {
-            data >> x >> y >> z >> r >> g >> b ;
+            for( int i = 0; i < order.size() ; ++i )
+            {
+                // extract position of the value associated to variable
+                const size_t index = order[i].first;
+
+                // initalized coordinate value
+                if ( order[i].second == "x" )
+                    x = atof( splitted_line[index].c_str() );
+
+                if ( order[i].second == "y" )
+                    y = atof( splitted_line[index].c_str() );
+
+                if ( order[i].second == "z" )
+                    z = atof( splitted_line[index].c_str() );
+
+                // if color field found
+                if( order.size() == 6 )
+                {
+                  if ( order[i].second == "red" || order[i].second == "diffuse_red" )
+                      r = atoi( splitted_line[index].c_str() );
+
+                  if ( order[i].second == "green" )
+                      g = atoi( splitted_line[index].c_str() );
+
+                  if ( order[i].second == "blue" )
+                      b = atoi( splitted_line[index].c_str() );
+                }
+                else
+                {
+                    // export default color (white)
+                    r = 255; g = 255; b=255;
+                }
+
+            }
 
             // store point information in big vector
             vector <double>  position;
@@ -534,20 +607,6 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
             pointAndColor.push_back(std::make_pair(position, color));
         }
 
-        // if we read header, load point cloud.
-        if( bReadHeader && (headerSize == 13 || headerSize == 29) && pointAndColor.size() < nb_point )
-        {
-          data >> x >> y >> z >> r >> g >> b >> nx >> ny >> nz ;
-
-          // store point information in big vector
-          vector <double>  position;
-          vector <unsigned int> color;
-
-          position.push_back(x); position.push_back(y); position.push_back(z);
-          color.push_back(r);    color.push_back(g);    color.push_back(b);
-
-          pointAndColor.push_back(std::make_pair(position, color));
-        }
     }
 
     // close stream
@@ -558,6 +617,7 @@ bool loadPointCloud ( char * fileName ,   vector< std::pair < vector <double >, 
     else
     {
         std::cerr << "Something went wrong during the loading of the point cloud" << std::endl;
+        std::cerr << "Loaded " << pointAndColor.size() << " points over " << nb_point << std::endl;
         return false ;
     }
 

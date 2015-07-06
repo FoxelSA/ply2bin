@@ -203,7 +203,7 @@ bool  loadCalibrationData(std::vector < sensorData > & vec_sensorData,
 * \return  bool value telling if the loading was sucessfull or not.
 */
 
-bool loadPointCloud ( char * fileName ,
+bool loadPointCloud ( const char * fileName ,
                       vector< std::pair < vector <double >, vector<unsigned int> > > & pointAndColor
 );
 

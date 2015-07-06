@@ -73,6 +73,8 @@
 #include <cstring>
 #include <gnomonic-all.h>
 #include <project.hpp>
+#include "file_system.hpp"
+#include "cmdLine.h"
 
 using namespace cv;
 
@@ -96,112 +98,144 @@ using namespace cv;
 
 int main(int argc, char** argv) {
 
-    /* Usage branch */
-    if ( ( argc!= 7 ) || argc<=1 || strcmp( argv[1], "help" ) == 0  ) {
+    CmdLine cmd;
 
-        /* Display help */
-        printf( "Usage :\n\n" );
-        printf( "ply2bin   point_cloud   pose_file  aligned_file  scale_file  mount_point   mac_adress \n\n");
-        printf( "point_cloud   = name of the point cloud  \n" );
-        printf( "pose_file     = complete path of the pose file \n");
-        printf( "aligned_file  = complete path of the alignement transformation \n");
-        printf( "scale_file    = complete path of the scaling matrix\n");
-        printf( "mount_point   = mount point of camera folder \n");
-        printf( "mac_address   = camera mac address \n");
+    // load inputs
+    std::string  sPointCloud="";       // original point cloud in ply format
+    std::string  sPoseFile="";         // camera rig pose file
+    std::string  sAlignedFile="";      // alignment transformation
+    std::string  sScaleFile="";        // scale factor file
+    std::string  sMountPoint="";       // mount point
+    std::string  sMacAdress="";        // camera mac address
+    std::string  sAddTrans="";         // additionnal transformation
+    std::string  sOutputDirectory="";  // output directory
+    std::string  sPanoPath="";         // complete path of the eqr panorama
+    bool         bUseJson=0;           // export point cloud in json or binary format
+    double       sx(0.0);              // shift to add to x to get true aligned coordinates
+    double       sy(0.0);              // shift to add to y to get true aligned coordinates
+    double       sz(0.0);              // shift to add to z to get true aligned coordinates
 
-        return 0;
+    cmd.add( make_option('p', sPointCloud, "pointCloud") );
+    cmd.add( make_option('f', sPoseFile, "poseFile") );
+    cmd.add( make_option('m', sMacAdress, "macAddress") );
+    cmd.add( make_option('d', sMountPoint, "mountPoint") );
+    cmd.add( make_option('a', sAlignedFile, "align") );
+    cmd.add( make_option('s', sScaleFile, "scale") );
+    cmd.add( make_option('t', sAddTrans, "addTrans") );
+    cmd.add( make_option('o', sOutputDirectory, "output") );
+    cmd.add( make_option('i', sPanoPath, "pano") );
+    cmd.add( make_option('b', bUseJson, "useJson") );
+    cmd.add( make_option('x', sx, "x") );
+    cmd.add( make_option('y', sy, "y") );
+    cmd.add( make_option('z', sz, "z") );
 
-    } else {
-        // now extract calibration information related to each module
-        std::string  sMountPoint = argv[5];
-        std::string  smacAddress = argv[6];
+    try {
+          if (argc == 1) throw std::string("Invalid command line parameter.");
+          cmd.process(argc, argv);
+    } catch(const std::string& s) {
+          std::cerr << "Usage: " << argv[0] << '\n'
+          << "[-p|--pointCloud]  pose cloud in ply format\n"
+          << "[-f|--poseFile]    pose file\n"
+          << "[-m|--macAddress]  camera mac adress\n"
+          << "[-d|--mountPoint]  mount point \n"
+          << "[-a|--align]       alignment transformation\n"
+          << "[-s|--scale]       scale factor file to have metric scale\n"
+          << "[-t|--addTrans]    additional transformation \n"
+          << "[-o|--output]      output directory\n"
+          << "[-b|--useJson]     export point cloud in json file or binary file. Default is binary\n"
+          << "[-i|--pano]        complete path of the eqr panorama associated to pose file\n"
+          << "[-x|--sx]          x-coordinate shift to get true aligned coordinates\n"
+          << "[-y|--sy]          y-coordinate shift to get true aligned coordinates\n"
+          << "[-z|--sz]          z-coordinate shift to get true aligned coordinates\n"
+          << std::endl;
 
-        std::vector < sensorData > vec_sensorData;
-        bool bLoadedCalibData = loadCalibrationData( vec_sensorData,
-                                                     sMountPoint,
-                                                     smacAddress );
-
-        if( !bLoadedCalibData )
-        {
-            std::cerr << " Could not read calibration data" << std::endl;
-            return EXIT_FAILURE;
-        }
-        else
-        {
-            std::cout << "Loaded calibration information " << std::endl;
-        }
-
-        // load point cloud
-        vector< std::pair < vector <double >, vector<unsigned int> > > pointAndColor;
-        bool  bLoadPC = loadPointCloud( argv[1], pointAndColor);
-
-        if( !bLoadPC )
-        {
-            return  EXIT_FAILURE;
-        }
-        else
-        {
-            std::cout << "Loaded point cloud " << std::endl;
-        }
-
-        // load scale factor
-        ifstream pose(argv[4]);
-
-        //check if file exist for reading
-         if( pose == NULL){
-             fprintf(stderr, "couldn't open scale file %s \n ", argv[4] );
-             return false;
-         }
-
-         // read pose information
-         double x,y,z;
-         while (pose >> x >> y >> z){
-           std::cout << "load scale file" << std::endl;
-         }
-
-         //close stream
-         pose.close();
-
-         const double scale = (x + y + z) / 3.0;
-
-        // load panorama pose
-        std::string  posePath = argv[2];
-        vector< std::vector<double> > rigPose;
-
-        bool bLoadPose = loadRigPose ( posePath, rigPose);
-
-        // load alignement transformation
-        std::string  alignedPath = argv[3];
-        vector< std::vector<double> > alignedPose;
-
-        bool bLoadAligned = loadRigPose ( alignedPath, alignedPose);
-
-        if( !bLoadPose || !bLoadAligned )
-        {
-            return EXIT_FAILURE;
-        }
-        else
-        {
-            std::cout << "Loaded panorama pose " << std::endl;
-        }
-
-        // project point cloud on panorama
-        std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels;
-        bool  bProject = projectPointCloud ( pointAndPixels, pointAndColor, rigPose, alignedPose, scale, vec_sensorData );
-
-        if( !bProject )
-        {
-            std::cerr << "No point are projected on your panorama " << std::endl;
-            return EXIT_FAILURE;
-        }
-        else
-        {
-            std::cout << "Projected point cloud on panorama " << std::endl;
-        }
-
-        // export point cloud to json
-        exportToJson( argv[2] , vec_sensorData, scale, pointAndPixels );
-        return 0;
+          std::cerr << s << std::endl;
+          return EXIT_FAILURE;
     }
+
+    // now extract calibration information related to each module
+    std::vector < sensorData > vec_sensorData;
+    bool bLoadedCalibData = loadCalibrationData( vec_sensorData,
+                                                     sMountPoint.c_str(),
+                                                     sMacAdress.c_str() );
+
+    if( !bLoadedCalibData )
+    {
+        std::cerr << " Could not read calibration data" << std::endl;
+        return EXIT_FAILURE;
+    }
+    else
+    {
+        std::cout << "Loaded calibration information " << std::endl;
+    }
+
+    // load point cloud
+    vector< std::pair < vector <double >, vector<unsigned int> > > pointAndColor;
+    bool  bLoadPC = loadPointCloud( sPointCloud.c_str(), pointAndColor);
+
+    if( !bLoadPC )
+    {
+        return  EXIT_FAILURE;
+    }
+    else
+    {
+        std::cout << "Loaded point cloud " << std::endl;
+    }
+
+    // load scale factor
+    ifstream pose(sScaleFile.c_str());
+
+    //check if file exist for reading
+    if( pose == NULL){
+        fprintf(stderr, "couldn't open scale file %s \n ", sScaleFile.c_str() );
+         return false;
+    }
+
+    // read pose information
+    double x,y,z;
+    while (pose >> x >> y >> z){
+        std::cout << "load scale file" << std::endl;
+    }
+
+    //close stream
+    pose.close();
+
+    const double scale = (x + y + z) / 3.0;
+
+    // load panorama pose
+    vector< std::vector<double> > rigPose;
+    bool bLoadPose = loadRigPose ( sPoseFile.c_str(), rigPose);
+
+    // load alignement transformation
+    vector< std::vector<double> > alignedPose;
+
+    bool bLoadAligned = loadRigPose ( sAlignedFile.c_str(), alignedPose);
+
+    if( !bLoadPose || !bLoadAligned )
+    {
+        return EXIT_FAILURE;
+    }
+    else
+    {
+        std::cout << "Loaded panorama pose " << std::endl;
+    }
+
+    // project point cloud on panorama
+    std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels;
+    bool  bProject = projectPointCloud ( pointAndPixels, pointAndColor, rigPose, alignedPose, scale, vec_sensorData );
+
+    if( !bProject )
+    {
+        std::cerr << "No point are projected on your panorama " << std::endl;
+        return EXIT_FAILURE;
+    }
+    else
+    {
+        std::cout << "Projected point cloud on panorama " << std::endl;
+    }
+
+    // export point cloud to json
+    exportToJson( sPoseFile.c_str() , vec_sensorData, scale, pointAndPixels );
+    return 0;
 
 }
