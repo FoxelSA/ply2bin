@@ -41,7 +41,8 @@
 add_executable(ply2bin
                   ply2bin.cpp
                   project.cpp
-                  tools.cpp)
+                  tools.cpp
+                  input_output.cpp )
 
 add_dependencies(ply2bin libgnomonic libfastcal stlplus)
 

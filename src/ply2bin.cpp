@@ -73,6 +73,7 @@
 #include <cstring>
 #include <gnomonic-all.h>
 #include <project.hpp>
+#include <input_output.hpp>
 #include "file_system.hpp"
 #include "cmdLine.h"
 
@@ -153,71 +154,70 @@ int main(int argc, char** argv) {
           return EXIT_FAILURE;
     }
 
+    // if no point cloud, pose file, mount point or mac adress is given, exit
+    if( sPointCloud.empty() || sPoseFile.empty() || sMacAdress.empty() || sMountPoint.empty() )
+    {
+        std::cerr << " One of the mandatory fields (point clout, pose file, mac adress, mount point) is missing " << std::endl;
+    }
+
     // now extract calibration information related to each module
     std::vector < sensorData > vec_sensorData;
     bool bLoadedCalibData = loadCalibrationData( vec_sensorData,
                                                      sMountPoint.c_str(),
                                                      sMacAdress.c_str() );
 
+    // check that the calibration are sucessfully loaded
     if( !bLoadedCalibData )
     {
-        std::cerr << " Could not read calibration data" << std::endl;
+        std::cerr << "Could not read calibration data" << std::endl;
         return EXIT_FAILURE;
     }
-    else
-    {
-        std::cout << "Loaded calibration information " << std::endl;
-    }
 
-    // load point cloud
+    // load point cloud and check the loading of it.
     vector< std::pair < vector <double >, vector<unsigned int> > > pointAndColor;
     bool  bLoadPC = loadPointCloud( sPointCloud.c_str(), pointAndColor);
 
     if( !bLoadPC )
     {
+        std::cout << "Could not read point cloud " << std::endl;
         return  EXIT_FAILURE;
     }
-    else
+
+    //load scale factor
+    double scale = 1.0;
+
+    // if we provide a scale factor use it, the use scale = 1.0
+    if( !sScaleFile.empty() )
     {
-        std::cout << "Loaded point cloud " << std::endl;
+       bool bLoadedScale = loadScaleFactor ( scale, sScaleFile );
+       if( !bLoadedScale )
+       {
+         std::cerr << "Error, could not read scale factor file or scale is < 0 " << std::endl;
+       }
     }
-
-    // load scale factor
-    ifstream pose(sScaleFile.c_str());
-
-    //check if file exist for reading
-    if( pose == NULL){
-        fprintf(stderr, "couldn't open scale file %s \n ", sScaleFile.c_str() );
-         return false;
-    }
-
-    // read pose information
-    double x,y,z;
-    while (pose >> x >> y >> z){
-        std::cout << "load scale file" << std::endl;
-    }
-
-    //close stream
-    pose.close();
-
-    const double scale = (x + y + z) / 3.0;
 
     // load panorama pose
     vector< std::vector<double> > rigPose;
     bool bLoadPose = loadRigPose ( sPoseFile.c_str(), rigPose);
+    if( !bLoadPose )
+    {
+        std::cerr << "Could not load pose file, please check your inputs " << std::endl;
+        return EXIT_FAILURE;
+    }
 
     // load alignement transformation
     vector< std::vector<double> > alignedPose;
+    bool bLoadAligned = true ;
 
-    bool bLoadAligned = loadRigPose ( sAlignedFile.c_str(), alignedPose);
-
-    if( !bLoadPose || !bLoadAligned )
+    // load alignement transformation if and only if the provided string is not empty
+    if ( !sAlignedFile.empty() )
     {
-        return EXIT_FAILURE;
-    }
-    else
-    {
-        std::cout << "Loaded panorama pose " << std::endl;
+          bLoadAligned = loadRigPose ( sAlignedFile.c_str(), alignedPose);
+          if( !bLoadAligned )
+          {
+              std::cerr << "Could not load alignement transformation, please check your input file" << std::endl;
+              return EXIT_FAILURE;
+          }
     }
 
     // project point cloud on panorama
@@ -228,10 +228,6 @@ int main(int argc, char** argv) {
     {
         std::cerr << "No point are projected on your panorama " << std::endl;
         return EXIT_FAILURE;
-    }
-    else
-    {
-        std::cout << "Projected point cloud on panorama " << std::endl;
     }
 
     // export point cloud to json
