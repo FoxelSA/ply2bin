@@ -36,11 +36,11 @@
  *      Attribution" section of <http://foxel.ch/license>.
  */
 
- /*! \file poco2pano.cpp
+ /*! \file ply2bin.cpp
  * \author Stephane Flotron <s.flotron@foxel.ch>
  */
- /*! \mainpage poco2pano
- * \section poco2pano
+ /*! \mainpage ply2bin
+ * \section ply2bin
  *
  * Point cloud exportation to freepano
  *
@@ -50,7 +50,7 @@
  *
  * \section Copyright
  *
- * Copyright (c) 2013-2014 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />
+ * Copyright (c) 2015 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />
  * This program is part of the FOXEL project <[http://foxel.ch](http://foxel.ch)>.
  *
  * Please read the [COPYRIGHT.md](COPYRIGHT.md) file for more information.
@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
 
         /* Display help */
         printf( "Usage :\n\n" );
-        printf( "poco2pano   point_cloud   pose_file  aligned_file  scale_file  mount_point   mac_adress \n\n");
+        printf( "ply2bin   point_cloud   pose_file  aligned_file  scale_file  mount_point   mac_adress \n\n");
         printf( "point_cloud   = name of the point cloud  \n" );
         printf( "pose_file     = complete path of the pose file \n");
         printf( "aligned_file  = complete path of the alignement transformation \n");

@@ -1,5 +1,5 @@
 /*
- * poco2pano - Export openMVG point cloud to freepano
+ * project.hpp - Header file of openMVG point cloud exportation to freepano
  *
  * Copyright (c) 2015 FOXEL SA - http://foxel.ch
  * Please read <http://foxel.ch/license> for more information.
@@ -39,8 +39,8 @@
  /*! \file project.hpp
  * \author Stephane Flotron <s.flotron@foxel.ch>
  */
- /*! \mainpage poco2pano
- * \section poco2pano
+ /*! \mainpage ply2bin
+ * \section ply2bin
  *
  * Point cloud exportation to freepano
  *
@@ -50,7 +50,7 @@
  *
  * \section Copyright
  *
- * Copyright (c) 2013-2014 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />
+ * Copyright (c) 2015 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />
  * This program is part of the FOXEL project <[http://foxel.ch](http://foxel.ch)>.
  *
  * Please read the [COPYRIGHT.md](COPYRIGHT.md) file for more information.
