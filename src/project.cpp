@@ -539,19 +539,19 @@ bool loadPointCloud ( const char * fileName ,   vector< std::pair < vector <doub
 
             //detect color
             // detect red color
-            if( splitted_line[1]=="uchar" && ( splitted_line[2]=="red" || splitted_line[2]=="diffuse_red") )
+            if( ( splitted_line[1]=="uchar" || splitted_line[1]=="char" ) && ( splitted_line[2]=="red" || splitted_line[2]=="diffuse_red") )
             {
                order.push_back( std::make_pair(cprop, splitted_line[2]) );
             }
 
             // detect green color
-            if( splitted_line[1]=="uchar" && ( splitted_line[2]=="green" || splitted_line[2]=="diffuse_green") )
+            if( ( splitted_line[1]=="uchar" || splitted_line[1]=="char" ) && ( splitted_line[2]=="green" || splitted_line[2]=="diffuse_green") )
             {
                order.push_back( std::make_pair(cprop, splitted_line[2]) );
             }
 
             // detect blue color
-            if( splitted_line[1]=="uchar" && ( splitted_line[2]=="blue" || splitted_line[2]=="diffuse_blue") )
+            if( ( splitted_line[1]=="uchar" || splitted_line[1]=="char" ) && ( splitted_line[2]=="blue" || splitted_line[2]=="diffuse_blue") )
             {
                order.push_back( std::make_pair(cprop, splitted_line[2]) );
             }
@@ -560,7 +560,7 @@ bool loadPointCloud ( const char * fileName ,   vector< std::pair < vector <doub
         }
 
         // if we read header, load point cloud.
-        if( bReadHeader && pointAndColor.size() < nb_point && order.size() == 6 && line != "end_header")
+        if( bReadHeader && pointAndColor.size() < nb_point && ( order.size() == 6 || order.size() == 3) && line != "end_header")
         {
             for( int i = 0; i < order.size() ; ++i )
             {
@@ -583,10 +583,10 @@ bool loadPointCloud ( const char * fileName ,   vector< std::pair < vector <doub
                   if ( order[i].second == "red" || order[i].second == "diffuse_red" )
                       r = atoi( splitted_line[index].c_str() );
 
-                  if ( order[i].second == "green" )
+                  if ( order[i].second == "green" || order[i].second == "diffuse_green" )
                       g = atoi( splitted_line[index].c_str() );
 
-                  if ( order[i].second == "blue" )
+                  if ( order[i].second == "blue" || order[i].second == "diffuse_blue")
                       b = atoi( splitted_line[index].c_str() );
                 }
                 else
@@ -594,7 +594,6 @@ bool loadPointCloud ( const char * fileName ,   vector< std::pair < vector <doub
                     // export default color (white)
                     r = 255; g = 255; b=255;
                 }
-
             }
 
             // store point information in big vector
@@ -618,6 +617,8 @@ bool loadPointCloud ( const char * fileName ,   vector< std::pair < vector <doub
     {
         std::cerr << "Something went wrong during the loading of the point cloud" << std::endl;
         std::cerr << "Loaded " << pointAndColor.size() << " points over " << nb_point << std::endl;
+        std::cerr << "Supports only single  x y z in float / double fields " << std::endl;
+        std::cerr << "Supports only single (ambient_)red, (ambient_)green, (ambient_)blue char /  uchar fields " << std::endl;
         return false ;
     }
 
