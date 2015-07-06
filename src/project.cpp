@@ -53,7 +53,11 @@ bool projectPointCloud (
            const std::vector < std::vector <double> > & alignedPose,
            const double & scale,
            const std::vector < std::vector <double> > & transformation,
-           const std::vector < sensorData > & vec_sensorData )
+           const double &sx,
+           const double &sy,
+           const double &sz,
+           const std::vector < sensorData > & vec_sensorData,
+           const std::string panoPath )
 {
     // extract rig rotation and center
     double  Rrig[3][3] = {
@@ -112,13 +116,32 @@ bool projectPointCloud (
         cA[2] = transformation[3][2];
     }
 
+    // check if we could print the projected point on the provided EQR panorama
+    bool  bPrint = false ;
 
-#if DEBUG
     // load image
-    std::string panoPath = "/data/structure/footage/00-0E-64-08-1B-6E/master/1429143317/segment/1429143318/stitch_selections/dav_3/stitched/result_1429143335_882930.tif";
     Mat pano_img;
-    pano_img = imread(panoPath.c_str(), CV_LOAD_IMAGE_COLOR );
-#endif
+
+    // if a panorama is given, check existence and integrity
+    if( !panoPath.empty() )
+    {
+        if ( !stlplus::file_exists( panoPath ) )
+        {
+            std::cerr << "The provided EQR panorama not exists, do noting" << std::endl;
+        }
+        else
+        {
+            pano_img = imread(panoPath.c_str(), CV_LOAD_IMAGE_COLOR );
+
+            // Check for invalid input (corrupted image or so on )
+            if(!pano_img.data )
+            {
+                std::cerr <<  "Could not open the EQR panorama, do nothing" << std::endl;
+            }
+            else
+                bPrint = true ;  // print projected point cloud on the EQR panoram
+        }
+    }
 
     // project point cloud into panorama
     for( size_t i = 0 ; i < pointAndColor.size(); ++i )
@@ -213,32 +236,34 @@ bool projectPointCloud (
                       if( up > 0 && up < sd.lfImageFullWidth && vp > 0 && vp < sd.lfImageFullHeight )
                       {
 
-#if DEBUG
-                          // export point on panorama (for debug purpose only)
-                          for(int k = -1 ; k < 2 ; ++k)
-                              for( int l = -1; l < 2 ; ++l)
-                              {
-                                  // export point on stiched panorama
-                                  Vec3b color = pano_img.at<Vec3b>(Point(up + sd.lfXPosition + k, vp + sd.lfYPosition + l));
-                                  color.val[0] =  0;
-                                  color.val[1] =  0;
-                                  color.val[2] =  255;
+                          if( bPrint )
+                          {
+                            // export point on panorama (for debug purpose only)
+                            for(int k = -1 ; k < 2 ; ++k)
+                                for( int l = -1; l < 2 ; ++l)
+                                {
+                                    // export point on stiched panorama
+                                    Vec3b color = pano_img.at<Vec3b>(Point(up + sd.lfXPosition + k, vp + sd.lfYPosition + l));
+                                    color.val[0] =  0;
+                                    color.val[1] =  0;
+                                    color.val[2] =  255;
 
-                                  // set pixel
-                                  pano_img.at<Vec3b>(Point(up + sd.lfXPosition +k , vp + sd.lfYPosition + l)) = color;
+                                    // set pixel
+                                    pano_img.at<Vec3b>(Point(up + sd.lfXPosition +k , vp + sd.lfYPosition + l)) = color;
+                            }
                           }
-#endif
+
                           // export projected point
                           std::vector < double > pixels;
                           std::vector < double > point;
 
                           pixels.push_back(up + sd.lfXPosition);
                           pixels.push_back(vp + sd.lfYPosition);
-                          pixels.push_back( sqrt(xrig * xrig + yrig * yrig + zrig * zrig) );
+                          pixels.push_back( scale * sqrt(xrig * xrig + yrig * yrig + zrig * zrig) );
 
-                          point.push_back( pos[0] );
-                          point.push_back( pos[1] );
-                          point.push_back( pos[2] );
+                          point.push_back( pos[0] + sx );
+                          point.push_back( pos[1] + sy );
+                          point.push_back( pos[2] + sz );
                           point.push_back( i );
 
                           pointAndPixels.push_back( std::make_pair( point, pixels ) );
@@ -254,9 +279,11 @@ bool projectPointCloud (
 
     }
 
-#if DEBUG
-    imwrite( "./pointcloud_on_pano.tif", pano_img);
-#endif
+    // export projected point cloud on the eqr image
+    if( bPrint )
+    {
+        imwrite( "./pointcloud_on_pano.tif", pano_img);
+    }
 
     if( pointAndPixels.size() > 0 )
         return true;

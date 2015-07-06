@@ -160,6 +160,25 @@ int main(int argc, char** argv) {
         std::cerr << " One of the mandatory fields (point clout, pose file, mac adress, mount point) is missing " << std::endl;
     }
 
+    // check if output dir is given
+    if (sOutputDirectory.empty())
+    {
+        std::cerr << "\nInvalid output directory" << std::endl;
+        return EXIT_FAILURE;
+    }
+    else
+    {
+      // if output dir is empty, create it
+      if ( !stlplus::folder_exists( sOutputDirectory ) )
+        {
+          if( !stlplus::folder_create ( sOutputDirectory ) )
+          {
+            std::cerr << "\nCannot create output directory" << std::endl;
+            return EXIT_FAILURE;
+          }
+        }
+    };
+
     // now extract calibration information related to each module
     std::vector < sensorData > vec_sensorData;
     bool bLoadedCalibData = loadCalibrationData( vec_sensorData,
@@ -237,7 +256,17 @@ int main(int argc, char** argv) {
 
     // project point cloud on panorama
     std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels;
-    bool  bProject = projectPointCloud ( pointAndPixels, pointAndColor, rigPose, alignedPose, scale, transformation, vec_sensorData );
+    bool  bProject = projectPointCloud ( pointAndPixels,
+                                         pointAndColor,
+                                         rigPose,
+                                         alignedPose,
+                                         scale,
+                                         transformation,
+                                         sx,
+                                         sy,
+                                         sz,
+                                         vec_sensorData,
+                                         sPanoPath);
 
     if( !bProject )
     {
@@ -246,7 +275,7 @@ int main(int argc, char** argv) {
     }
 
     // export point cloud to json
-    exportToJson( sPoseFile.c_str() , vec_sensorData, scale, pointAndPixels );
+    exportToJson( sPoseFile, sOutputDirectory, vec_sensorData, pointAndPixels );
     return 0;
 
 }

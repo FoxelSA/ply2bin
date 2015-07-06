@@ -88,8 +88,7 @@
 #include <opencv/highgui.h>
 #include <tools.hpp>
 #include <gnomonic-all.h>
-
-#define DEBUG 0
+#include "file_system.hpp"
 
 using namespace std;
 using namespace cv;
@@ -111,7 +110,11 @@ using namespace cv;
 * \param alignedPose      4x3 matrix containing Rotation (first 3X3 block) and translation (line 4) that aligne point cloud in MN95
 * \param scale            scale factor used in alignment transformation
 * \param transformation   additional transformation of the point cloud.
+* \param sx               shift on the x-coordinate in order to retrieve the true aligned coordinates
+* \param sy               shift on the y-coordinate in order to retrieve the true aligned coordinates
+* \param sz               shift on the z-coordinate in order to retrieve the true aligned coordinates
 * \param vec_sensorData   Calibration information for each sensor
+* \param panoPath         The complete path of the EQR panorama
 *
 * \return  bool value indicating if the projection was sucessfull or not
 */
@@ -123,7 +126,11 @@ bool projectPointCloud (
            const std::vector < std::vector <double> > & alingnedPose,
            const double & scale,
            const std::vector < std::vector <double> > & tranformation,
-           const std::vector < sensorData > & vec_sensorData );
+           const double &sx,
+           const double &sy,
+           const double &sz,
+           const std::vector < sensorData > & vec_sensorData,
+           const std::string panoPath );
 
 
 #endif /* PROJECT_HPP_ */

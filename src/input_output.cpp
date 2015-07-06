@@ -47,8 +47,8 @@ using namespace cv;
 **********************************************************************/
 
 void  exportToJson (  const std::string  poseFile,
+                      const std::string  sOutputDirectory,
                       const std::vector < sensorData > & vec_sensorData,
-                      const double  scale,
                       std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels)
 {
     // extract pose basename
@@ -57,14 +57,14 @@ void  exportToJson (  const std::string  poseFile,
     split( poseFile, "/", splitted_name_slash);
     poseBaseName = splitted_name_slash[ splitted_name_slash.size() -1 ];
 
-    // load rig pose
-    std::vector < std::vector <double > > rigPose;
-    bool  bLoadedPose  = loadRigPose ( poseFile, rigPose );
-
     // remove extension and add json extension
     std::vector < std::string >  splitted_name;
     split( poseBaseName, ".", splitted_name);
-    std::string  jsonFile = splitted_name[splitted_name.size()-2] + ".json";
+    std::string  jsonFile = sOutputDirectory + "/" + splitted_name[splitted_name.size()-2] + ".json";
+
+    // load rig pose
+    std::vector < std::vector <double > > rigPose;
+    bool  bLoadedPose  = loadRigPose ( poseFile, rigPose );
 
     // create export stream
     std::string  outpath( jsonFile.c_str() );
@@ -88,12 +88,12 @@ void  exportToJson (  const std::string  poseFile,
         std::vector <double>  pt      = pointAndPixels[i].first;
         std::vector <double>  pixels  = pointAndPixels[i].second;
 
-        fprintf(out, "%f,", scale * pixels[2] );
+        fprintf(out, "%f,", pixels[2] );
         fprintf(out, "%d,", (int) pt[3] );
         fprintf(out, "%f,", pixels[0] * radPerPix );
         fprintf(out, "%f,", pixels[1] * radPerPix - 0.5 * LG_PI );
-        fprintf(out, "%f,", pt[0] + 2501600 );
-        fprintf(out, "%f,", pt[1] + 1117500 );
+        fprintf(out, "%f,", pt[0] );
+        fprintf(out, "%f,", pt[1] );
         fprintf(out, "%f",  pt[2] );
 
 
