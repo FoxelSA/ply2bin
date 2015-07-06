@@ -1,5 +1,5 @@
 #
-# poco2pano - Export openMVG point cloud to freepano
+# ply2bin - Export openMVG point cloud to freepano
 #
 # Copyright (c) 2015 FOXEL SA - http://foxel.ch
 # Please read <http://foxel.ch/license> for more information.
@@ -43,37 +43,20 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 # ==============================================================================
-# Build poco2pano executable
+# Build ply2bin executable
 # ==============================================================================
-add_executable(poco2pano
-                  poco2pano.cpp
+add_executable(ply2bin
+                  ply2bin.cpp
                   project.cpp
                   tools.cpp)
 
 
-target_link_libraries(poco2pano
-  ${POCOTOPANO_LIBRARY_LIST}
+target_link_libraries(ply2bin
+  ${PLY2BIN_LIBRARY_LIST}
 )
 
-add_dependencies(poco2pano libgnomonic libfastcal)
+add_dependencies(ply2bin libgnomonic libfastcal)
 
-set_target_properties( poco2pano PROPERTIES RUNTIME_OUTPUT_DIRECTORY .. )
+set_target_properties( ply2bin PROPERTIES RUNTIME_OUTPUT_DIRECTORY .. )
 
-install(TARGETS poco2pano DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
-
-# ==============================================================================
-# Build ply2json executable
-# ==============================================================================
-add_executable(ply2json
-                  ply2json.cpp
-                  project.cpp
-                  tools.cpp)
-
-
-target_link_libraries(ply2json
-  ${POCOTOPANO_LIBRARY_LIST}
-)
-
-set_target_properties( ply2json PROPERTIES RUNTIME_OUTPUT_DIRECTORY .. )
-
-install(TARGETS ply2json DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+install(TARGETS ply2bin DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

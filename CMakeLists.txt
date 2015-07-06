@@ -41,11 +41,11 @@
 # ==============================================================================
 
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
-project(poco2pano C CXX)
+project(ply2bin C CXX)
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_BUILD_TYPE Release)
 
-set(POCOTOPANO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/)
+set(PLY2BIN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/)
 
 # ==============================================================================
 #  C / C++ flags
@@ -120,7 +120,7 @@ set(LIBFASTCAL_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/lib/libfastcal/bin/libfastcal.a)
 # Include directories
 # ==============================================================================
 include_directories(
-  ${POCOTOPANO_SOURCE_DIR}
+  ${PLY2BIN_SOURCE_DIR}
   ${OpenCV_INCLUDE_DIRS}
   ${LIBGNOMONIC_INCLUDE_DIR}
   ${LIBINTER_INCLUDE_DIR}
@@ -130,7 +130,7 @@ include_directories(
 # ==============================================================================
 # Library linkage
 # ==============================================================================
-set(POCOTOPANO_LIBRARY_LIST
+set(PLY2BIN_LIBRARY_LIST
   ${OpenCV_LIBS}
   ${LIBGNOMONIC_LIBS}
   ${LIBINTER_LIBS}
