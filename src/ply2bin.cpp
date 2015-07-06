@@ -220,9 +220,24 @@ int main(int argc, char** argv) {
           }
     }
 
+    // load additional transformation
+    vector< std::vector<double> > transformation;
+    bool bLoadTransformation = true ;
+
+    // load additional transformation if and only if the provided string is not empty
+    if ( !sAddTrans.empty() )
+    {
+          bLoadTransformation = loadRigPose ( sAddTrans.c_str(), transformation );
+          if( !bLoadTransformation )
+          {
+              std::cerr << "Could not load additional transformation, please check your input file" << std::endl;
+              return EXIT_FAILURE;
+          }
+    }
+
     // project point cloud on panorama
     std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels;
-    bool  bProject = projectPointCloud ( pointAndPixels, pointAndColor, rigPose, alignedPose, scale, vec_sensorData );
+    bool  bProject = projectPointCloud ( pointAndPixels, pointAndColor, rigPose, alignedPose, scale, transformation, vec_sensorData );
 
     if( !bProject )
     {

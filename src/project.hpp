@@ -110,6 +110,7 @@ using namespace cv;
 * \param rigPose          4x3 matrix containing Rotation (first 3X3 block) and translation (line 4)
 * \param alignedPose      4x3 matrix containing Rotation (first 3X3 block) and translation (line 4) that aligne point cloud in MN95
 * \param scale            scale factor used in alignment transformation
+* \param transformation   additional transformation of the point cloud.
 * \param vec_sensorData   Calibration information for each sensor
 *
 * \return  bool value indicating if the projection was sucessfull or not
@@ -121,6 +122,7 @@ bool projectPointCloud (
            const std::vector < std::vector <double> > & rigPose,
            const std::vector < std::vector <double> > & alingnedPose,
            const double & scale,
+           const std::vector < std::vector <double> > & tranformation,
            const std::vector < sensorData > & vec_sensorData );
 
 

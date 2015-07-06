@@ -52,6 +52,7 @@ bool projectPointCloud (
            const std::vector < std::vector <double> > & rigPose,
            const std::vector < std::vector <double> > & alignedPose,
            const double & scale,
+           const std::vector < std::vector <double> > & transformation,
            const std::vector < sensorData > & vec_sensorData )
 {
     // extract rig rotation and center
@@ -63,23 +64,54 @@ bool projectPointCloud (
 
     vector <double> cRig = rigPose[3];
 
-    // extract aligned transformation
+    // intialize alignement transformation
     double  Ralign[3][3] = {
-        { alignedPose[0][0], alignedPose[0][1], alignedPose[0][2] },
-        { alignedPose[1][0], alignedPose[1][1], alignedPose[1][2] },
-        { alignedPose[2][0], alignedPose[2][1], alignedPose[2][2] }
+        { 1.0, 0.0, 0.0 },
+        { 0.0, 1.0, 0.0 },
+        { 0.0, 0.0, 1.0 }
     };
 
-    vector <double> cA = alignedPose[3];
+    double cA[3] = {0.0, 0.0, 0.0};
+
+    // if alignement tranformation is provided
+    if( alignedPose.size() == 4 )
+    {
+        // update rotation
+        for ( size_t i = 0; i < 3 ; ++i )
+            for( size_t j = 0 ; j < 3 ; ++j )
+                  Ralign[i][j] = alignedPose[i][j];
+
+        // update translation
+        cA[0] = alignedPose[3][0];
+        cA[1] = alignedPose[3][1];
+        cA[2] = alignedPose[3][2];
+    }
+
+    // initialize additonnal transformation
 
     // local correction of rig pose
     double  Rcorr[3][3] = {
-        {  1.000, 0 * 0.008, -0 * 0.008 },
-        { -0 * 0.008, 1.000,  0.000 },
-        {  0 * 0.008, 0.000,  1.000 }
+        {  1.0, 0.0, 0.0 },
+        {  0.0, 1.0, 0.0 },
+        {  0.0, 0.0, 1.0 }
     };
 
-    double tCorr[3] = { 0 * 0.048, 0 * 0.013, -0 * 0.244 } ;
+    double tCorr[3] = { 0.0, 0.0, 0.0 } ;
+
+    // if additionnal transformation is provided
+    if( transformation.size() == 4 )
+    {
+        // update rotation
+        for ( size_t i = 0; i < 3 ; ++i )
+            for( size_t j = 0 ; j < 3 ; ++j )
+                  Rcorr[i][j] = transformation[i][j];
+
+        // update translation
+        cA[0] = transformation[3][0];
+        cA[1] = transformation[3][1];
+        cA[2] = transformation[3][2];
+    }
+
 
 #if DEBUG
     // load image
