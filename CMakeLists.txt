@@ -47,6 +47,11 @@ set(CMAKE_BUILD_TYPE Release)
 
 set(PLY2BIN_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/)
 
+# guard against in-source builds
+IF(${CMAKE_SOURCE_DIR} STREQUAL ${CMAKE_BINARY_DIR})
+  message(FATAL_ERROR "In-source builds not allowed.")
+ENDIF()
+
 # ==============================================================================
 #  C / C++ flags
 # ==============================================================================
@@ -69,7 +74,7 @@ endif()
 FIND_PACKAGE(OpenMP)
 IF (OPENMP_FOUND)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
- ENDIF (OPENMP_FOUND)
+ENDIF (OPENMP_FOUND)
 
  # ==============================================================================
 # add a target to generate API documentation with Doxygen
@@ -106,6 +111,12 @@ set(LIBINTER_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/lib/libgnomonic/lib/libinte
 set(LIBINTER_LIBS ${CMAKE_CURRENT_SOURCE_DIR}/lib/libgnomonic/lib/libinter/bin/libinter.a)
 
 # ==============================================================================
+#  stlplus
+# ==============================================================================
+add_subdirectory(lib)
+set(LIBSTL_LIBS ${PROJECT_BINARY_DIR}/lib/stlplus3/libstlplus.a)
+
+# ==============================================================================
 #  submodules libfastcal
 # ==============================================================================
 add_custom_target(
@@ -125,6 +136,9 @@ include_directories(
   ${LIBGNOMONIC_INCLUDE_DIR}
   ${LIBINTER_INCLUDE_DIR}
   ${LIBFASTCAL_INCLUDE_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/cmdLine
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/stlAddition
+  ${CMAKE_CURRENT_SOURCE_DIR}/lib/stlplus3/filesystemSimplified/
 )
 
 # ==============================================================================
@@ -135,6 +149,7 @@ set(PLY2BIN_LIBRARY_LIST
   ${LIBGNOMONIC_LIBS}
   ${LIBINTER_LIBS}
   ${LIBFASTCAL_LIBS}
+  ${LIBSTL_LIBS}
 )
 
 # ==============================================================================
