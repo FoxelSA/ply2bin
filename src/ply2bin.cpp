@@ -276,7 +276,17 @@ int main(int argc, char** argv) {
     }
 
     // export point cloud to json
-    exportToJson( sPoseFile, sOutputDirectory, vec_sensorData, pointAndPixels );
-    return 0;
+    bool bIsExported = false;
+
+    if( bUseJson )
+    {
+        bIsExported = exportToJson( sPoseFile, sOutputDirectory, vec_sensorData, pointAndPixels );
+    }
+    else
+    {
+        bIsExported = exportToBin(  sPoseFile, sOutputDirectory, vec_sensorData, pointAndPixels );
+    }
+
+    return bIsExported;
 
 }

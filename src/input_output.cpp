@@ -46,7 +46,7 @@ using namespace cv;
 *
 **********************************************************************/
 
-void  exportToJson (  const std::string  poseFile,
+bool  exportToJson (  const std::string  poseFile,
                       const std::string  sOutputDirectory,
                       const std::vector < sensorData > & vec_sensorData,
                       std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels)
@@ -67,47 +67,139 @@ void  exportToJson (  const std::string  poseFile,
     bool  bLoadedPose  = loadRigPose ( poseFile, rigPose );
 
     // create export stream
-    std::string  outpath( jsonFile.c_str() );
+    ofstream out;
+    out.precision( 6 );  // used fixed notation with 6 digit of precision
+    out.setf( std::ios::fixed );
+    out.open( jsonFile.c_str(), ios::trunc ); // erease previous content
 
-    FILE *out;
-    out = fopen(outpath.c_str(), "w");
-
-    // extract panorama width in order to convert coordinate in latitude-longitude
-    const size_t ImageFullWidth = vec_sensorData[0].lfImageFullWidth;
-    const double radPerPix = LG_PI2 / (double) ImageFullWidth;
-
-    //create header
-    fprintf(out, "{\n");
-    fprintf(out, "\"nb_points\": %ld,\n", pointAndPixels.size());
-    fprintf(out, "\"points_format\":  [\"depth\", \"index\", \"theta\", \"phi\", \"x\", \"y\", \"z\"],\n");
-    fprintf(out, "\"points\":  [\n");
-
-    // export points and coordinates
-    for( int i = 0; i < (int) pointAndPixels.size() ; ++i)
+    if( out.is_open() )
     {
-        std::vector <double>  pt      = pointAndPixels[i].first;
-        std::vector <double>  pixels  = pointAndPixels[i].second;
+        // extract panorama width in order to convert coordinate in latitude-longitude
+        const size_t ImageFullWidth = vec_sensorData[0].lfImageFullWidth;
+        const double radPerPix = LG_PI2 / (double) ImageFullWidth;
 
-        fprintf(out, "%f,", pixels[2] );
-        fprintf(out, "%d,", (int) pt[3] );
-        fprintf(out, "%f,", pixels[0] * radPerPix );
-        fprintf(out, "%f,", pixels[1] * radPerPix - 0.5 * LG_PI );
-        fprintf(out, "%f,", pt[0] );
-        fprintf(out, "%f,", pt[1] );
-        fprintf(out, "%f",  pt[2] );
+        //create header
+        out << "{\n";
+        out << "\"nb_points\": " << pointAndPixels.size() << ",\n";
+        out << "\"points_format\":  [\"depth\", \"index\", \"theta\", \"phi\", \"x\", \"y\", \"z\"],\n";
+        out << "\"points\":  [\n";
+
+        // export points and coordinates
+        for( int i = 0; i < (int) pointAndPixels.size() ; ++i)
+        {
+            std::vector <double>  pt      = pointAndPixels[i].first;
+            std::vector <double>  pixels  = pointAndPixels[i].second;
+
+            out << pixels[2]   << ",";
+            out << (int) pt[3] << ",";
+            out << pixels[0] * radPerPix << ",";
+            out << pixels[1] * radPerPix - 0.5 * LG_PI << ",";
+            out << pt[0] << ",";
+            out << pt[1] << ",";
+            out << pt[2] ;
 
 
-        if ( i < (int) pointAndPixels.size()-1 )
-             fprintf(out, ",\n");
-        else
-             fprintf(out, "\n");
+            if ( i < (int) pointAndPixels.size()-1 )
+                 out << ",\n";
+            else
+                 out << "\n";
+        }
+
+        out << "]\n";
+        out << "}\n";
+
+        // close stream
+        out.close();
+
+        // export json file sucessfully
+        return 1;
     }
+    else
+    {
+       std::cerr << " could not create output file " << std::endl;
+       return 0;
+    }
+}
 
-    fprintf(out, "]\n");
-    fprintf(out, "}\n");
+/*********************************************************************
+*  export projected point cloud to binary file format
+*
+**********************************************************************/
 
-    // close stream
-    fclose(out);
+bool  exportToBin (  const std::string  poseFile,
+                      const std::string  sOutputDirectory,
+                      const std::vector < sensorData > & vec_sensorData,
+                      std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels )
+{
+    // extract pose basename
+    std::string  poseBaseName;
+    std::vector < std::string >  splitted_name_slash;
+    split( poseFile, "/", splitted_name_slash);
+    poseBaseName = splitted_name_slash[ splitted_name_slash.size() -1 ];
+
+    // remove extension and add json extension
+    std::vector < std::string >  splitted_name;
+    split( poseBaseName, ".", splitted_name);
+    std::string  jsonFile = sOutputDirectory + "/" + splitted_name[splitted_name.size()-2] + ".bin";
+
+    // load rig pose
+    std::vector < std::vector <double > > rigPose;
+    bool  bLoadedPose  = loadRigPose ( poseFile, rigPose );
+
+    // create export stream
+    // create export stream
+    ofstream out;
+    out.precision( 6 );  // used fixed notation with 6 digit of precision
+    out.setf( std::ios::fixed );
+    out.open( jsonFile.c_str(), ios::trunc ); // erease previous content
+
+    if( out.is_open() )
+    {
+        // extract panorama width in order to convert coordinate in latitude-longitude
+        const size_t ImageFullWidth = vec_sensorData[0].lfImageFullWidth;
+        const double radPerPix = LG_PI2 / (double) ImageFullWidth;
+
+        //create header
+        out << "{\n";
+        out << "\"nb_points\": " << pointAndPixels.size() << ",\n";
+        out << "\"points_format\":  [\"depth\", \"index\", \"theta\", \"phi\", \"x\", \"y\", \"z\"],\n";
+        out << "\"points\":  [\n";
+
+        // export points and coordinates
+        for( int i = 0; i < (int) pointAndPixels.size() ; ++i)
+        {
+            std::vector <double>  pt      = pointAndPixels[i].first;
+            std::vector <double>  pixels  = pointAndPixels[i].second;
+
+            out << pixels[2]   << ",";
+            out << (int) pt[3] << ",";
+            out << pixels[0] * radPerPix << ",";
+            out << pixels[1] * radPerPix - 0.5 * LG_PI << ",";
+            out << pt[0] << ",";
+            out << pt[1] << ",";
+            out << pt[2] ;
+
+
+            if ( i < (int) pointAndPixels.size()-1 )
+                 out << ",\n";
+            else
+                 out << "\n";
+        }
+
+        out << "]\n";
+        out << "}\n";
+
+        // close stream
+        out.close();
+
+        // export json file sucessfully
+        return 1;
+    }
+    else
+    {
+       std::cerr << " could not create output file " << std::endl;
+       return 0;
+    }
 }
 
 /*********************************************************************
@@ -116,7 +208,8 @@ void  exportToJson (  const std::string  poseFile,
 **********************************************************************/
 
 void  pointCloudToJson ( const char * jsonName,
-    std::vector < std::pair < std::vector <double>, std::vector <unsigned int> > > pointAndColor )
+    std::vector < std::pair < std::vector <double>,
+    std::vector <unsigned int> > > pointAndColor )
 {
 
   // create export stream

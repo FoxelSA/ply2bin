@@ -61,8 +61,6 @@
  #include <tools.hpp>
  #include <gnomonic-all.h>
 
- #define DEBUG 0
-
  using namespace std;
  using namespace cv;
 
@@ -81,10 +79,34 @@
  * \param vec_sensorData   Calibration informations
  * \param pointAndPixels   List of 3D points and associated EQR pixels
  *
- * \return  Nothing
+ * \return  boolean indicating if the export went well
  */
 
- void  exportToJson (  const std::string  poseFile,
+bool  exportToJson (  const std::string  poseFile,
+                       const std::string  sOutputDirectory,
+                       const std::vector < sensorData > & vec_sensorData,
+                       std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels
+ );
+
+ /*********************************************************************
+ *  export projected point cloud to binary file format
+ *
+ **********************************************************************/
+
+ /*! \brief Export projected point cloud in a binary file format
+ *
+ * Given a list of 3D point and corresponding pixels on stiched EQR panorama,
+ * export theses informations to a json file.
+ *
+ * \param poseName         Name of the pose file. JSON export will have the same
+ * \param sOutputDirectory Folder where you want to save your json file
+ * \param vec_sensorData   Calibration informations
+ * \param pointAndPixels   List of 3D points and associated EQR pixels
+ *
+ * \return  boolean indicating if the export went well
+ */
+
+ bool  exportToBin  (  const std::string  poseFile,
                        const std::string  sOutputDirectory,
                        const std::vector < sensorData > & vec_sensorData,
                        std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels
