@@ -59,7 +59,13 @@
  #include <opencv/cv.h>
  #include <opencv/highgui.h>
  #include <tools.hpp>
+ #include <list>
  #include <gnomonic-all.h>
+
+// define variables needed for binary export
+#define FILE_MARKER "\xF0\xE1"
+#define FILE_VERSION "fpcl.0003" // increment this number when file format change !
+#define FILE_HEADER_SIZE 16 // multiple of 8
 
  using namespace std;
  using namespace cv;

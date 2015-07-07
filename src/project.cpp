@@ -93,7 +93,6 @@ bool projectPointCloud (
     }
 
     // initialize additonnal transformation
-
     // local correction of rig pose
     double  Rcorr[3][3] = {
         {  1.0, 0.0, 0.0 },
@@ -178,7 +177,7 @@ bool projectPointCloud (
           lf_Size_t cpt = 0;
           const lf_Real_t  max_depth = 1.0e10;
 
-          for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j )
+          for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j ) // kept only the 24 first channel of the eyesis
           {
               // extract sensor information
               sensorData  sd = vec_sensorData[j];
@@ -258,10 +257,14 @@ bool projectPointCloud (
                           std::vector < double > pixels;
                           std::vector < double > point;
 
+                          // store pixels coordinate in EQR panorama frame
                           pixels.push_back(up + sd.lfXPosition);
                           pixels.push_back(vp + sd.lfYPosition);
+
+                          // store depth
                           pixels.push_back( scale * sqrt(xrig * xrig + yrig * yrig + zrig * zrig) );
 
+                          // store 3D coordinate of point and index of point
                           point.push_back( pos[0] + sx );
                           point.push_back( pos[1] + sy );
                           point.push_back( pos[2] + sz );

@@ -275,7 +275,7 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    // export point cloud to json
+    // export point cloud to json or binary
     bool bIsExported = false;
 
     if( bUseJson )

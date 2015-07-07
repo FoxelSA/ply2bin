@@ -38,6 +38,9 @@
 
 #include <input_output.hpp>
 
+// initialize output variable
+char file_header[FILE_HEADER_SIZE];
+
 using namespace std;
 using namespace cv;
 
@@ -64,7 +67,7 @@ bool  exportToJson (  const std::string  poseFile,
 
     // load rig pose
     std::vector < std::vector <double > > rigPose;
-    bool  bLoadedPose  = loadRigPose ( poseFile, rigPose );
+    loadRigPose ( poseFile, rigPose );
 
     // create export stream
     ofstream out;
@@ -90,13 +93,13 @@ bool  exportToJson (  const std::string  poseFile,
             std::vector <double>  pt      = pointAndPixels[i].first;
             std::vector <double>  pixels  = pointAndPixels[i].second;
 
-            out << pixels[2]   << ",";
-            out << (int) pt[3] << ",";
-            out << pixels[0] * radPerPix << ",";
-            out << pixels[1] * radPerPix - 0.5 * LG_PI << ",";
-            out << pt[0] << ",";
-            out << pt[1] << ",";
-            out << pt[2] ;
+            out << pixels[2]   << ",";                           // depth
+            out << (int) pt[3] << ",";                           // index
+            out << pixels[0] * radPerPix << ",";                 // azimuth
+            out << pixels[1] * radPerPix - 0.5 * LG_PI << ",";   // elevation
+            out << pt[0] << ",";                                 // x coordinate of point
+            out << pt[1] << ",";                                 // y coordinate of point
+            out << pt[2] ;                                       // z coordinate of point
 
 
             if ( i < (int) pointAndPixels.size()-1 )
@@ -126,10 +129,10 @@ bool  exportToJson (  const std::string  poseFile,
 *
 **********************************************************************/
 
-bool  exportToBin (  const std::string  poseFile,
-                      const std::string  sOutputDirectory,
-                      const std::vector < sensorData > & vec_sensorData,
-                      std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels )
+bool  exportToBin ( const std::string  poseFile,
+                    const std::string  sOutputDirectory,
+                    const std::vector < sensorData > & vec_sensorData,
+                    std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels )
 {
     // extract pose basename
     std::string  poseBaseName;
@@ -144,14 +147,11 @@ bool  exportToBin (  const std::string  poseFile,
 
     // load rig pose
     std::vector < std::vector <double > > rigPose;
-    bool  bLoadedPose  = loadRigPose ( poseFile, rigPose );
+    loadRigPose ( poseFile, rigPose );
 
     // create export stream
-    // create export stream
     ofstream out;
-    out.precision( 6 );  // used fixed notation with 6 digit of precision
-    out.setf( std::ios::fixed );
-    out.open( jsonFile.c_str(), ios::trunc ); // erease previous content
+    out.open( jsonFile.c_str() ); // erease previous content
 
     if( out.is_open() )
     {
@@ -159,38 +159,190 @@ bool  exportToBin (  const std::string  poseFile,
         const size_t ImageFullWidth = vec_sensorData[0].lfImageFullWidth;
         const double radPerPix = LG_PI2 / (double) ImageFullWidth;
 
-        //create header
-        out << "{\n";
-        out << "\"nb_points\": " << pointAndPixels.size() << ",\n";
-        out << "\"points_format\":  [\"depth\", \"index\", \"theta\", \"phi\", \"x\", \"y\", \"z\"],\n";
-        out << "\"points\":  [\n";
+        // initialize sectors (following luc convention )
+        std::list<uint32_t> sector[360][180];
 
-        // export points and coordinates
-        for( int i = 0; i < (int) pointAndPixels.size() ; ++i)
+        // initialize output structure
+        double *mn95=new double[pointAndPixels.size()*3];
+        float  *eucl=new float [pointAndPixels.size()*3];
+
+        // create table for binary exports
+        for( size_t i = 0; i < pointAndPixels.size() ; ++i)
         {
             std::vector <double>  pt      = pointAndPixels[i].first;
             std::vector <double>  pixels  = pointAndPixels[i].second;
 
-            out << pixels[2]   << ",";
-            out << (int) pt[3] << ",";
-            out << pixels[0] * radPerPix << ",";
-            out << pixels[1] * radPerPix - 0.5 * LG_PI << ",";
-            out << pt[0] << ",";
-            out << pt[1] << ",";
-            out << pt[2] ;
+            //extract depth
+            const float depth = (float) pixels[2];
 
+            // convert pixels into radian
+            float theta = (float) ( pixels[0] * radPerPix ) ;
+            float phi   = (float) ( pixels[1] * radPerPix - 0.5 * LG_PI );
 
-            if ( i < (int) pointAndPixels.size()-1 )
-                 out << ",\n";
-            else
-                 out << "\n";
+            // convert angles into degrees
+            const float step = (float) (M_PI / 180. );
+
+            const int  longitude = ( (int) round(theta / step ) + 180 ) % 360 ;
+            int  latitude  = round( phi / step );
+
+            // keep only positive latitude
+            if( latitude < 0 )
+                latitude += 180 ;
+
+            // scale latitude for freepano
+            latitude = (180 - latitude ) % 180 ;
+
+            // initialize table index
+            const uint32_t  k = 3 * i ;
+            sector[longitude][latitude].push_back(k);
+
+            // convert panoramic pixels into cartersian webgl coordinates
+            phi   = phi - (float) ( LG_PI / 2.0 );
+            theta = theta - (float) (LG_PI / 2.0);
+            const float  x =  depth * sin ( phi ) * cos ( theta );
+            const float  z =  depth * sin ( phi ) * sin ( theta );
+            const float  y = -depth * cos ( phi );
+
+            // update table
+            eucl[ k ]     = x ;
+            eucl[ k + 1 ] = y ;
+            eucl[ k + 2 ] = z ;
+
+            // update aligned table
+            mn95[ k ]     =  pt[0] ;
+            mn95[ k + 1 ] =  pt[1] ;
+            mn95[ k + 2 ] =  pt[2] ;
         }
 
-        out << "]\n";
-        out << "}\n";
+        // now truely export file
+        //create header (using Luc's convention)
+        strncpy(file_header,FILE_MARKER,2);
+        strncat(file_header,FILE_VERSION,FILE_HEADER_SIZE-2);
+        out.write((char*)file_header,FILE_HEADER_SIZE);
+
+        // initialize variables for binary export
+        const size_t data_offset = out.tellp(); // get the current position in the stream
+        std::list < uint32_t > array_index ;
+
+        // output positions formatted as list of x,y,z for each [lon][lat] pair
+        // and prepare a 360x180 array index formatted as offset,count
+
+        for(  size_t lat=0; lat < 180; ++ lat)
+        {
+           for( size_t lon=0; lon < 360 ; ++lon )
+           {
+               // extract list of point associated with the pair (lon, lat)
+               std::list < uint32_t >  *_sector = &sector[lon][lat];
+
+               // update array index
+               uint32_t  particle_count = _sector->size();
+
+               if ( particle_count )
+               {
+                 // particles in this sector: store offset and particle count
+                 array_index.push_back((out.tellp()-data_offset)/sizeof(float));
+                 array_index.push_back(particle_count);
+               }
+               else
+               {
+                  // no particles here
+                  array_index.push_back(0);
+                  array_index.push_back(0);
+                  continue;
+               }
+
+              // write points positions for sector[lon][lat]
+              for (std::list<uint32_t>::iterator it=_sector->begin(); it!=_sector->end(); ++it) {
+                  uint32_t index=*it;
+                //  out.write((char*)&eucl[index],sizeof(*eucl)*3);
+              }
+           } // end loop for on lat
+        } // end loop of on lon
+
+        // check integrity
+        const size_t positions_byteCount=out.tellp()-data_offset;         // equals final position minus initial position
+        const bool   bFailure =
+                            (positions_byteCount / pointAndPixels.size() != sizeof(*eucl) * 3 ); // check that we exported the correct number of bytes
+
+        if ( bFailure) {
+          std::cerr << poseFile << ": position exported " << positions_byteCount << " bytes on " << sizeof(*eucl) * 3 << std::endl;
+          // return 0;
+        }
+
+        // now export aligned coordinates
+
+        // align start of double array on 8 bytes
+        const size_t  positions_filler=positions_byteCount%8;
+        if (positions_filler) {
+            out.write("fillfill",8-positions_filler);
+        }
+
+        // output positions formatted as list of x,y,z for each [lon][lat] pair
+        // and prepare a 360x180 array index formatted as offset,count
+        for( size_t lon=0; lon < 360 ; ++lon )
+        {
+           for(  size_t lat=0; lat < 180; ++ lat)
+           {
+               // extract list of point associated with the pair (lon, lat)
+               std::list < uint32_t >  *_sector = &sector[lon][lat];
+
+               // update array index
+               uint32_t  particle_count = _sector->size();
+
+               if ( particle_count == 0 )
+               {
+                  continue;
+               }
+
+              // write points positions for sector[lon][lat]
+              for (std::list<uint32_t>::iterator it=_sector->begin(); it!=_sector->end(); ++it) {
+                  uint32_t index=*it;
+                  out.write((char*)&mn95[index],sizeof(*mn95)*3);
+              }
+
+           } // end loop for on lat
+        } // end loop of on lon
+
+        // check integrity
+        const size_t mn95_byteCount = (size_t) out.tellp() - data_offset - positions_byteCount - positions_filler;         // equals final position minus initial position
+        const bool   bAlignedFailure =( mn95_byteCount != 2*positions_byteCount ); // check that we exported the correct number of bytes
+
+        if ( bAlignedFailure ) {
+          std::cerr << poseFile << ": aligned exported " << mn95_byteCount << " bytes on " << sizeof(*mn95) * 3 << std::endl;
+          // return 0;
+        }
+
+        // if alignment was needed before mn95 array, add it twice after (for proper table size computation in js)
+        if (positions_filler) {
+            out.write("fillfill",8-positions_filler);
+            out.write("fillfill",8-positions_filler);
+        }
+
+        // output index formatted as:
+        // offset, particle_count
+        for (std::list<uint32_t>::iterator it=array_index.begin(); it!=array_index.end(); ++it) {
+          uint32_t value=*it;
+          out.write((char*)&value,sizeof(value));
+        }
+
+        // check integrity
+        flush(out);
+        size_t  index_byteCount=(size_t)out.tellp() - data_offset - positions_byteCount - mn95_byteCount - (positions_filler * 3);
+        const bool bFinalFailure = (index_byteCount % sizeof(uint32_t) );
+
+        if (bFinalFailure) {
+          std::cerr << poseFile << " index exported " << index_byteCount << " bytes on " << sizeof(uint32_t) * array_index.size() << std::endl;
+          // return 0;
+        }
 
         // close stream
+        out.write((char*)FILE_MARKER,strlen(FILE_MARKER));
         out.close();
+
+        if (mn95_byteCount != 2*positions_byteCount ) {
+          std::cerr << "error: aligned bytes count != 2 * euclidian bytes count ! "  << mn95_byteCount << " " << 2 * positions_byteCount << std::endl;
+          // return 0;
+        }
 
         // export json file sucessfully
         return 1;
@@ -230,9 +382,9 @@ void  pointCloudToJson ( const char * jsonName,
     std::vector <double>        pt      = pointAndColor[i].first;
     std::vector <unsigned int>  color   = pointAndColor[i].second;
 
-    fprintf(out, "%f,", pt[0] );
-    fprintf(out, "%f,", pt[1] );
-    fprintf(out, "%f" , pt[2] );
+    fprintf(out, "%f,", pt[0] );   // x coordinate
+    fprintf(out, "%f,", pt[1] );   // y coordinate
+    fprintf(out, "%f" , pt[2] );   // z coordinate
 
     if ( i < (int) pointAndColor.size()-1 )
         fprintf(out, ",\n");
