@@ -266,7 +266,8 @@ int main(int argc, char** argv) {
                                          sy,
                                          sz,
                                          vec_sensorData,
-                                         sPanoPath);
+                                         sPanoPath,
+                                         sOutputDirectory );
 
     if( !bProject )
     {

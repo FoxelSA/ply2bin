@@ -115,6 +115,7 @@ using namespace cv;
 * \param sz               shift on the z-coordinate in order to retrieve the true aligned coordinates
 * \param vec_sensorData   Calibration information for each sensor
 * \param panoPath         The complete path of the EQR panorama
+* \param outputDirectory  The output directory where the json and the projected point cloud on EQR will be
 *
 * \return  bool value indicating if the projection was sucessfull or not
 */
@@ -130,7 +131,8 @@ bool projectPointCloud (
            const double &sy,
            const double &sz,
            const std::vector < sensorData > & vec_sensorData,
-           const std::string panoPath );
+           const std::string panoPath,
+           const std::string outputDirectory );
 
 
 #endif /* PROJECT_HPP_ */

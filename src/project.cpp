@@ -57,7 +57,8 @@ bool projectPointCloud (
            const double &sy,
            const double &sz,
            const std::vector < sensorData > & vec_sensorData,
-           const std::string panoPath )
+           const std::string panoPath,
+           const std::string outputDirectory )
 {
     // extract rig rotation and center
     double  Rrig[3][3] = {
@@ -282,7 +283,23 @@ bool projectPointCloud (
     // export projected point cloud on the eqr image
     if( bPrint )
     {
-        imwrite( "./pointcloud_on_pano.tif", pano_img);
+        std::string output_image_filename=outputDirectory+"/"; // output image filename
+
+        //extract image basename
+        std::vector<string>  split_slash;
+        split( panoPath, "/", split_slash );
+
+        const std::string image_basename =  split_slash[split_slash.size()-1];
+
+        // remove extension
+        std::vector<string>  out_split;
+        split( image_basename, ".", out_split );
+
+        // create output panorama name
+        output_image_filename+=out_split[0]+"-projected-pc.tif";
+
+        // write image on disk
+        imwrite(output_image_filename.c_str(), pano_img);
     }
 
     if( pointAndPixels.size() > 0 )
