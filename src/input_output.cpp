@@ -71,7 +71,7 @@ bool  exportToJson (  const std::string  poseFile,
 
     // create export stream
     ofstream out;
-    out.precision( 20 );  // used fixed notation with 6 digit of precision
+    out.precision( 17 );  // used fixed notation with 6 digit of precision
     out.setf( std::ios::scientific );
     out.open( jsonFile.c_str(), ios::trunc ); // erease previous content
 

@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
     cmd.add( make_option('t', sAddTrans, "addTrans") );
     cmd.add( make_option('o', sOutputDirectory, "output") );
     cmd.add( make_option('i', sPanoPath, "pano") );
-    cmd.add( make_option('b', bUseJson, "useJson") );
+    cmd.add( make_option('j', bUseJson, "useJson") );
     cmd.add( make_option('x', sx, "x") );
     cmd.add( make_option('y', sy, "y") );
     cmd.add( make_option('z', sz, "z") );
@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
           << "[-s|--scale]       scale factor file to have metric scale\n"
           << "[-t|--addTrans]    additional transformation \n"
           << "[-o|--output]      output directory\n"
-          << "[-b|--useJson]     export point cloud in json file or binary file. Default is binary\n"
+          << "[-j|--useJson]     export point cloud in json file or binary file. Default is binary\n"
           << "[-i|--pano]        complete path of the eqr panorama associated to pose file\n"
           << "[-x|--sx]          x-coordinate shift to get true aligned coordinates\n"
           << "[-y|--sy]          y-coordinate shift to get true aligned coordinates\n"
