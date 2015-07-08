@@ -71,8 +71,8 @@ bool  exportToJson (  const std::string  poseFile,
 
     // create export stream
     ofstream out;
-    out.precision( 6 );  // used fixed notation with 6 digit of precision
-    out.setf( std::ios::fixed );
+    out.precision( 20 );  // used fixed notation with 6 digit of precision
+    out.setf( std::ios::scientific );
     out.open( jsonFile.c_str(), ios::trunc ); // erease previous content
 
     if( out.is_open() )
@@ -163,6 +163,11 @@ bool  exportToBin ( const std::string  poseFile,
         std::list<uint32_t> sector[360][180];
 
         // initialize output structure
+        const double step = M_PI / 180.;
+        double depth, theta, phi;
+        double x,y,z;
+        int longitude, latitude;
+
         double *mn95=new double[pointAndPixels.size()*3];
         float  *eucl=new float [pointAndPixels.size()*3];
 
@@ -173,17 +178,15 @@ bool  exportToBin ( const std::string  poseFile,
             std::vector <double>  pixels  = pointAndPixels[i].second;
 
             //extract depth
-            const float depth = (float) pixels[2];
+            depth =  pixels[2];
 
             // convert pixels into radian
-            float theta = (float) ( pixels[0] * radPerPix ) ;
-            float phi   = (float) ( pixels[1] * radPerPix - 0.5 * LG_PI );
+            theta =  pixels[0] * radPerPix;
+            phi   =  pixels[1] * radPerPix - 0.5 * LG_PI;
 
             // convert angles into degrees
-            const float step = (float) (M_PI / 180. );
-
-            const int  longitude = ( (int) round(theta / step ) + 180 ) % 360 ;
-            int  latitude  = round( phi / step );
+            longitude = ( (int) round(theta / step ) + 180 ) % 360 ;
+            latitude  = round( phi / step );
 
             // keep only positive latitude
             if( latitude < 0 )
@@ -193,15 +196,16 @@ bool  exportToBin ( const std::string  poseFile,
             latitude = (180 - latitude ) % 180 ;
 
             // initialize table index
-            const uint32_t  k = 3 * i ;
+            unsigned long  k = 3 * i ;
             sector[longitude][latitude].push_back(k);
 
             // convert panoramic pixels into cartersian webgl coordinates
-            phi   = phi - (float) ( LG_PI / 2.0 );
-            theta = theta - (float) (LG_PI / 2.0);
-            const float  x =  depth * sin ( phi ) * cos ( theta );
-            const float  z =  depth * sin ( phi ) * sin ( theta );
-            const float  y = -depth * cos ( phi );
+            phi   = ( phi - M_PI / 2 );
+            theta = theta - M_PI / 2;
+
+            x =  depth * sin ( phi ) * cos ( theta );
+            z =  depth * sin ( phi ) * sin ( theta );
+            y = -depth * cos ( phi );
 
             // update table
             eucl[ k ]     = x ;
@@ -221,7 +225,7 @@ bool  exportToBin ( const std::string  poseFile,
         out.write((char*)file_header,FILE_HEADER_SIZE);
 
         // initialize variables for binary export
-        const size_t data_offset = out.tellp(); // get the current position in the stream
+        const long int data_offset = out.tellp(); // get the current position in the stream
         std::list < uint32_t > array_index ;
 
         // output positions formatted as list of x,y,z for each [lon][lat] pair
@@ -240,7 +244,7 @@ bool  exportToBin ( const std::string  poseFile,
                if ( particle_count )
                {
                  // particles in this sector: store offset and particle count
-                 array_index.push_back((out.tellp()-data_offset)/sizeof(float));
+                 array_index.push_back((out.tellp()-data_offset)/sizeof(x));
                  array_index.push_back(particle_count);
                }
                else
@@ -253,8 +257,8 @@ bool  exportToBin ( const std::string  poseFile,
 
               // write points positions for sector[lon][lat]
               for (std::list<uint32_t>::iterator it=_sector->begin(); it!=_sector->end(); ++it) {
-                  uint32_t index=*it;
-                //  out.write((char*)&eucl[index],sizeof(*eucl)*3);
+                  unsigned int index=*it;
+                  out.write((char*)&eucl[index],sizeof(*eucl)*3);
               }
            } // end loop for on lat
         } // end loop of on lon
@@ -265,8 +269,8 @@ bool  exportToBin ( const std::string  poseFile,
                             (positions_byteCount / pointAndPixels.size() != sizeof(*eucl) * 3 ); // check that we exported the correct number of bytes
 
         if ( bFailure) {
-          std::cerr << poseFile << ": position exported " << positions_byteCount << " bytes on " << sizeof(*eucl) * 3 << std::endl;
-          // return 0;
+          std::cerr << poseFile << ": position exported " << positions_byteCount << " bytes on " << sizeof(*eucl) * 3 * pointAndPixels.size() << std::endl;
+          return 0;
         }
 
         // now export aligned coordinates
@@ -279,9 +283,9 @@ bool  exportToBin ( const std::string  poseFile,
 
         // output positions formatted as list of x,y,z for each [lon][lat] pair
         // and prepare a 360x180 array index formatted as offset,count
-        for( size_t lon=0; lon < 360 ; ++lon )
+        for(  size_t lat=0; lat < 180; ++ lat)
         {
-           for(  size_t lat=0; lat < 180; ++ lat)
+           for( size_t lon=0; lon < 360 ; ++lon )
            {
                // extract list of point associated with the pair (lon, lat)
                std::list < uint32_t >  *_sector = &sector[lon][lat];
@@ -296,7 +300,7 @@ bool  exportToBin ( const std::string  poseFile,
 
               // write points positions for sector[lon][lat]
               for (std::list<uint32_t>::iterator it=_sector->begin(); it!=_sector->end(); ++it) {
-                  uint32_t index=*it;
+                  unsigned int index=*it;
                   out.write((char*)&mn95[index],sizeof(*mn95)*3);
               }
 
@@ -308,8 +312,8 @@ bool  exportToBin ( const std::string  poseFile,
         const bool   bAlignedFailure =( mn95_byteCount != 2*positions_byteCount ); // check that we exported the correct number of bytes
 
         if ( bAlignedFailure ) {
-          std::cerr << poseFile << ": aligned exported " << mn95_byteCount << " bytes on " << sizeof(*mn95) * 3 << std::endl;
-          // return 0;
+          std::cerr << poseFile << ": aligned exported " << mn95_byteCount << " bytes on " << sizeof(*mn95) * 3 * pointAndPixels.size() << std::endl;
+          return 0;
         }
 
         // if alignment was needed before mn95 array, add it twice after (for proper table size computation in js)
@@ -332,7 +336,7 @@ bool  exportToBin ( const std::string  poseFile,
 
         if (bFinalFailure) {
           std::cerr << poseFile << " index exported " << index_byteCount << " bytes on " << sizeof(uint32_t) * array_index.size() << std::endl;
-          // return 0;
+          return 0;
         }
 
         // close stream
@@ -341,7 +345,7 @@ bool  exportToBin ( const std::string  poseFile,
 
         if (mn95_byteCount != 2*positions_byteCount ) {
           std::cerr << "error: aligned bytes count != 2 * euclidian bytes count ! "  << mn95_byteCount << " " << 2 * positions_byteCount << std::endl;
-          // return 0;
+          return 0;
         }
 
         // export json file sucessfully
