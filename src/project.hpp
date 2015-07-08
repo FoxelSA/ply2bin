@@ -76,6 +76,8 @@
 #include <fstream>
 #include <ctype.h>
 #include <cmath>
+#include <map>
+#include <set>
 #include <unistd.h>
 #include <string.h>
 #include <vector>

@@ -175,7 +175,6 @@ bool projectPointCloud (
 
           // count the number of subcam in which point is apparing
           lf_Size_t cpt = 0;
-          const lf_Real_t  max_depth = 1.0e10;
 
           for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j ) // kept only the 24 first channel of the eyesis
           {
@@ -186,15 +185,17 @@ bool projectPointCloud (
               lf_Real_t  X_C[3] = { X[0] - sd.C[0],  X[1] - sd.C[1], X[2] -sd.C[2]};
               lf_Real_t depth = sd.R[6] * X_C[0] + sd.R[7] * X_C[1] + sd.R[8] * X_C[2];
 
+              // additionnal check on depth (to render point only in near and far plane)
+              const  lf_Real_t  near = 0.2;
+              const  lf_Real_t   far = 30.0;
+              lf_Real_t     zp  = 2.0 * ( depth - near ) / (far - near ) - 1.0;
+
               // initialize projected pixels
               lf_Real_t  ug = -1.0;
               lf_Real_t  vg = -1.0;
 
               //  if depth > 0, point could be seen from camera j. Exclude point too far ( > 30.0 meter from rig)
-              if( cpt == 0 && depth > 1.0e-6
-                           && abs(X_C[0]) < max_depth
-                           && abs(X_C[1]) < max_depth
-                           && abs(X_C[2]) < max_depth )
+              if( cpt == 0 && ( zp >= -1.0 && zp <= 1.0 ) )
               {
                   double  PX0 = sd.P[0] * X[0] + sd.P[1] * X[1] + sd.P[2 ] * X[2] + sd.P[3 ] * X[3];
                   double  PX1 = sd.P[4] * X[0] + sd.P[5] * X[1] + sd.P[6 ] * X[2] + sd.P[7 ] * X[3];
@@ -235,23 +236,6 @@ bool projectPointCloud (
 
                       if( up > 0 && up < sd.lfImageFullWidth && vp > 0 && vp < sd.lfImageFullHeight )
                       {
-
-                          if( bPrint )
-                          {
-                            // export point on panorama (for debug purpose only)
-                            for(int k = -1 ; k < 2 ; ++k)
-                                for( int l = -1; l < 2 ; ++l)
-                                {
-                                    // export point on stiched panorama
-                                    Vec3b color = pano_img.at<Vec3b>(Point(up + sd.lfXPosition + k, vp + sd.lfYPosition + l));
-                                    color.val[0] =  0;
-                                    color.val[1] =  0;
-                                    color.val[2] =  255;
-
-                                    // set pixel
-                                    pano_img.at<Vec3b>(Point(up + sd.lfXPosition +k , vp + sd.lfYPosition + l)) = color;
-                            }
-                          }
 
                           // export projected point
                           std::vector < double > pixels;
@@ -300,6 +284,27 @@ bool projectPointCloud (
 
         // create output panorama name
         output_image_filename+=out_split[0]+"-projected-pc.tif";
+
+        for( size_t i = 0 ; i < pointAndPixels.size() ; ++i )
+        {
+          // export point on panorama (for debug purpose only)
+          for(int k = -1 ; k < 2 ; ++k)
+              for( int l = -1; l < 2 ; ++l)
+              {
+                  const double  x = pointAndPixels[i].second[0];
+                  const double  y = pointAndPixels[i].second[1];
+
+                  // export point on stiched panorama
+                  Vec3b color = pano_img.at<Vec3b>(Point(x + k, y + l));
+                  color.val[0] =  0;
+                  color.val[1] =  0;
+                  color.val[2] =  255;
+
+                  // set pixel
+                  pano_img.at<Vec3b>(Point(x + k , y + l)) = color;
+          }
+
+        }
 
         // write image on disk
         imwrite(output_image_filename.c_str(), pano_img);
