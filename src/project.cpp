@@ -111,9 +111,9 @@ bool projectPointCloud (
                   Rcorr[i][j] = transformation[i][j];
 
         // update translation
-        cA[0] = transformation[3][0];
-        cA[1] = transformation[3][1];
-        cA[2] = transformation[3][2];
+        tCorr[0] = transformation[3][0];
+        tCorr[1] = transformation[3][1];
+        tCorr[2] = transformation[3][2];
     }
 
     // check if we could print the projected point on the provided EQR panorama

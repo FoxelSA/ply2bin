@@ -500,6 +500,25 @@ bool  loadCalibrationData( std::vector < sensorData > & vec_sensorData,
 
 bool loadPointCloud ( const char * fileName ,   vector< std::pair < vector <double >, vector<unsigned int> > > & pointAndColor )
 {
+    // read some header informations (the number of 3D points)
+    std::string sFileName(fileName);
+    std::vector < string > splitted_name;
+    split(sFileName, ".", splitted_name);
+
+    if( splitted_name.size() > 1 )
+    {
+        if( splitted_name[splitted_name.size()-1] != "ply")
+        {
+           std::cerr << "provided point cloud is not in ply file format " << std::endl;
+           return false;
+        }
+    }
+    else
+    {
+        std::cerr << "Could not detect point cloud extension." << std::endl;
+        return false;
+    }
+
     // create file stream
     ifstream data( fileName );
 
