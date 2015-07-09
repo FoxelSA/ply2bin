@@ -143,25 +143,34 @@ bool projectPointCloud (
         }
     }
 
+    // initialize set of point to render
+    std::set < size_t >  set_point_to_render;
+
+    pointAndPixels.resize( pointAndColor.size() );
+
     // project point cloud into panorama
     for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j ) // kept only the 24 first channel of the eyesis
     {
           // extract sensor information
           sensorData  sd = vec_sensorData[j];
 
-          // create output image map
-          Mat image(sd.lfHeight, sd.lfWidth, CV_8U, Scalar(255));
-
           // create Buffer map
           const unsigned int  S = pow(2,32)-1;
           std::vector < std::vector < size_t > >  buffer;
+          std::vector < std::vector < size_t > >  point_to_render;
 
-          for( size_t kl=0;  kl < sd.lfWidth; ++kl )
+          for( int kl=0;  kl < sd.lfWidth; ++kl )
           {
               std::vector < size_t >  temp;
-              for( size_t  kn=0; kn < sd.lfHeight; ++kn )
-                  temp.push_back( S );
+              std::vector < size_t >  temp_point;
 
+              for( int  kn=0; kn < sd.lfHeight; ++kn )
+              {
+                  temp.push_back( S );
+                  temp_point.push_back( pointAndColor.size() );
+              }
+
+              point_to_render.push_back( temp_point );
               buffer.push_back( temp );
           }
 
@@ -226,19 +235,19 @@ bool projectPointCloud (
                       int u0 = floor( ug );
                       int v0 = floor( vg );
 
-                      for( int p = -19 ; p < 20 ; ++p )
+                      int patch_size = std::max(5, (int) floor(15.0/depth) );
+
+                      for( int p = -patch_size ; p < patch_size+1 ; ++p )
                       {
-                          for( int q = -19 ; q < 20 ; ++q )
+                          for( int q = -patch_size ; q < patch_size+1 ; ++q )
                           {
                               if(  u0+p >=0 && u0+p < sd.lfWidth && v0 + q >= 0 && v0+q  < sd.lfHeight )
                               {
                                 if ( zbuff < buffer[u0+p][v0+q] )
                                 {
+                                    // update z-buffer and point to render list
                                     buffer[u0+p][v0+q] = zbuff ;
-                                    // export point on stiched panorama
-                                    unsigned char color = image.at<uchar>(Point(u0 + p , v0 + q));
-                                    color =  floor( 255 * zbuff / (double) S );
-                                    image.at<uchar>(Point(u0 + p , v0 + q)) = color;
+                                    point_to_render[u0+p][v0+q] = i ;
                                 }
                               }
                           }
@@ -291,23 +300,39 @@ bool projectPointCloud (
                           point.push_back( pos[2] + sz );
                           point.push_back( i );
 
-                          pointAndPixels.push_back( std::make_pair( point, pixels ) );
+                          pointAndPixels[i] = std::make_pair( point, pixels );
 
                       }
 
+                  } // end if ug, vg \in [0,width]x [0, height]
+
+              } // end if zp \in [-1,1]
+
+          }  // end loop on point
+
+          // update set of points to render
+          for( int kl=0;  kl < sd.lfWidth; ++kl )
+          {
+              for( int  kn=0; kn < sd.lfHeight; ++kn )
+              {
+                  // if rendered pixel point is not the default value, render it.
+                  if( point_to_render[kl][kn] != pointAndColor.size() )
+                  {
+                     set_point_to_render.insert( point_to_render[kl][kn] );
                   }
+              }
+          }
 
-              }  // end loop on point
+    } // end loop on channel
 
-          } // end loop on channel
+    std::cout << "point cloud cleaning " << std::endl;
+    // clean pointAndPixels lists
+    std::vector<std::pair <std::vector <double>, std::vector<double> > > pointAndPixels_cleaned;
 
-          // export tile with depth
-          std::ostringstream ibuffName;
-          ibuffName << "z-buffer-"<< j << ".jpeg";
+    for (std::set<size_t>::iterator it=set_point_to_render.begin(); it!=set_point_to_render.end(); ++it)
+        pointAndPixels_cleaned.push_back( pointAndPixels[*it]);
 
-          imwrite( ibuffName.str(), image );
-
-    }
+    pointAndPixels.swap(pointAndPixels_cleaned);
 
     // export projected point cloud on the eqr image
     if( bPrint )

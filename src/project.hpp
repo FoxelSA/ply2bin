@@ -81,6 +81,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <vector>
+#include <algorithm>
 #include <utility>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
