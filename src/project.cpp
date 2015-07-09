@@ -144,58 +144,73 @@ bool projectPointCloud (
     }
 
     // project point cloud into panorama
-    for( size_t i = 0 ; i < pointAndColor.size(); ++i )
+    for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j ) // kept only the 24 first channel of the eyesis
     {
-          // retrieve point information
-          vector <double> pos   = pointAndColor[i].first;
-          double xrig, yrig, zrig;
+          // extract sensor information
+          sensorData  sd = vec_sensorData[j];
 
-          double  xcentered[3];
+          // create output image map
+          Mat image(sd.lfHeight, sd.lfWidth, CV_8U, Scalar(255));
 
-          xcentered[0] = pos[0];
-          xcentered[1] = pos[1];
-          xcentered[2] = pos[2];
+          // create Buffer map
+          const unsigned int  S = pow(2,32)-1;
+          std::vector < std::vector < size_t > >  buffer;
 
-          // undo rotation and scaling that aligned point cloud
-          double x_pc = ( Ralign[0][0] * xcentered[0] + Ralign[1][0] * xcentered[1] + Ralign[2][0] *  xcentered[2] + cA[0]) / scale;
-          double y_pc = ( Ralign[0][1] * xcentered[0] + Ralign[1][1] * xcentered[1] + Ralign[2][1] *  xcentered[2] + cA[1]) / scale;
-          double z_pc = ( Ralign[0][2] * xcentered[0] + Ralign[1][2] * xcentered[1] + Ralign[2][2] *  xcentered[2] + cA[2]) / scale;
-
-          // undo rotation and scaling that move point cloud
-          double x_tmp = Rcorr[0][0] * ( x_pc -tCorr[0])  + Rcorr[1][0] * ( y_pc -tCorr[1]) + Rcorr[2][0] *  ( z_pc -tCorr[2]) ;
-          double y_tmp = Rcorr[0][1] * ( x_pc -tCorr[0])  + Rcorr[1][1] * ( y_pc -tCorr[1]) + Rcorr[2][1] *  ( z_pc -tCorr[2]) ;
-          double z_tmp = Rcorr[0][2] * ( x_pc -tCorr[0])  + Rcorr[1][2] * ( y_pc -tCorr[1]) + Rcorr[2][2] *  ( z_pc -tCorr[2]) ;
-
-          // convert point cloud into rig referential, i.e. x_rig = R_rig ( x - C_rig )
-          xrig = Rrig[0][0] * (x_tmp -cRig[0]) + Rrig[0][1] * (y_tmp - cRig[1]) + Rrig[0][2] * ( z_tmp - cRig[2] ) ;
-          yrig = Rrig[1][0] * (x_tmp -cRig[0]) + Rrig[1][1] * (y_tmp - cRig[1]) + Rrig[1][2] * ( z_tmp - cRig[2] ) ;
-          zrig = Rrig[2][0] * (x_tmp -cRig[0]) + Rrig[2][1] * (y_tmp - cRig[1]) + Rrig[2][2] * ( z_tmp - cRig[2] ) ;
-
-          const lf_Real_t  X[4] = { xrig, yrig, zrig, 1.0 };
-
-          // count the number of subcam in which point is apparing
-          lf_Size_t cpt = 0;
-
-          for( size_t j = 0; j < vec_sensorData.size()-2 ; ++j ) // kept only the 24 first channel of the eyesis
+          for( size_t kl=0;  kl < sd.lfWidth; ++kl )
           {
-              // extract sensor information
-              sensorData  sd = vec_sensorData[j];
+              std::vector < size_t >  temp;
+              for( size_t  kn=0; kn < sd.lfHeight; ++kn )
+                  temp.push_back( S );
+
+              buffer.push_back( temp );
+          }
+
+          for( size_t i = 0 ; i < pointAndColor.size(); ++i )
+          {
+              // retrieve point information
+              vector <double> pos   = pointAndColor[i].first;
+              double xrig, yrig, zrig;
+
+              double  xcentered[3];
+
+              xcentered[0] = pos[0];
+              xcentered[1] = pos[1];
+              xcentered[2] = pos[2];
+
+              // undo rotation and scaling that aligned point cloud
+              double x_pc = ( Ralign[0][0] * xcentered[0] + Ralign[1][0] * xcentered[1] + Ralign[2][0] *  xcentered[2] + cA[0]) / scale;
+              double y_pc = ( Ralign[0][1] * xcentered[0] + Ralign[1][1] * xcentered[1] + Ralign[2][1] *  xcentered[2] + cA[1]) / scale;
+              double z_pc = ( Ralign[0][2] * xcentered[0] + Ralign[1][2] * xcentered[1] + Ralign[2][2] *  xcentered[2] + cA[2]) / scale;
+
+              // undo rotation and scaling that move point cloud
+              double x_tmp = Rcorr[0][0] * ( x_pc -tCorr[0])  + Rcorr[1][0] * ( y_pc -tCorr[1]) + Rcorr[2][0] *  ( z_pc -tCorr[2]) ;
+              double y_tmp = Rcorr[0][1] * ( x_pc -tCorr[0])  + Rcorr[1][1] * ( y_pc -tCorr[1]) + Rcorr[2][1] *  ( z_pc -tCorr[2]) ;
+              double z_tmp = Rcorr[0][2] * ( x_pc -tCorr[0])  + Rcorr[1][2] * ( y_pc -tCorr[1]) + Rcorr[2][2] *  ( z_pc -tCorr[2]) ;
+
+              // convert point cloud into rig referential, i.e. x_rig = R_rig ( x - C_rig )
+              xrig = Rrig[0][0] * (x_tmp -cRig[0]) + Rrig[0][1] * (y_tmp - cRig[1]) + Rrig[0][2] * ( z_tmp - cRig[2] ) ;
+              yrig = Rrig[1][0] * (x_tmp -cRig[0]) + Rrig[1][1] * (y_tmp - cRig[1]) + Rrig[1][2] * ( z_tmp - cRig[2] ) ;
+              zrig = Rrig[2][0] * (x_tmp -cRig[0]) + Rrig[2][1] * (y_tmp - cRig[1]) + Rrig[2][2] * ( z_tmp - cRig[2] ) ;
+
+              const lf_Real_t  X[4] = { xrig, yrig, zrig, 1.0 };
 
               // compute depth related to camera j
               lf_Real_t  X_C[3] = { X[0] - sd.C[0],  X[1] - sd.C[1], X[2] -sd.C[2]};
               lf_Real_t depth = sd.R[6] * X_C[0] + sd.R[7] * X_C[1] + sd.R[8] * X_C[2];
 
               // additionnal check on depth (to render point only in near and far plane)
-              const  lf_Real_t  near = 0.2;
-              const  lf_Real_t   far = 30.0;
-              lf_Real_t     zp  = 2.0 * ( depth - near ) / (far - near ) - 1.0;
+              const  lf_Real_t  near = 1.0;
+              const  lf_Real_t   far = 50.0;
+              lf_Real_t     zp = 2.0 * ( depth - near ) / (far - near ) - 1.0;
+              lf_Real_t    zp1 = ( far + near ) / (2.0 * (far - near)) - far * near / depth / (far - near) + 0.5;
+              const size_t  zbuff = floor( S * zp1 );
 
               // initialize projected pixels
               lf_Real_t  ug = -1.0;
               lf_Real_t  vg = -1.0;
 
               //  if depth > 0, point could be seen from camera j. Exclude point too far ( > 30.0 meter from rig)
-              if( cpt == 0 && ( zp >= -1.0 && zp <= 1.0 ) )
+              if( ( zp >= -1.0 && zp <= 1.0 ) )
               {
                   double  PX0 = sd.P[0] * X[0] + sd.P[1] * X[1] + sd.P[2 ] * X[2] + sd.P[3 ] * X[3];
                   double  PX1 = sd.P[4] * X[0] + sd.P[5] * X[1] + sd.P[6 ] * X[2] + sd.P[7 ] * X[3];
@@ -207,6 +222,28 @@ bool projectPointCloud (
 
                   if ( ug > 0.0 && ug < sd.lfWidth && vg > 0.0 && vg < sd.lfHeight)
                   {
+                      // create z-buffer image
+                      int u0 = floor( ug );
+                      int v0 = floor( vg );
+
+                      for( int p = -19 ; p < 20 ; ++p )
+                      {
+                          for( int q = -19 ; q < 20 ; ++q )
+                          {
+                              if(  u0+p >=0 && u0+p < sd.lfWidth && v0 + q >= 0 && v0+q  < sd.lfHeight )
+                              {
+                                if ( zbuff < buffer[u0+p][v0+q] )
+                                {
+                                    buffer[u0+p][v0+q] = zbuff ;
+                                    // export point on stiched panorama
+                                    unsigned char color = image.at<uchar>(Point(u0 + p , v0 + q));
+                                    color =  floor( 255 * zbuff / (double) S );
+                                    image.at<uchar>(Point(u0 + p , v0 + q)) = color;
+                                }
+                              }
+                          }
+                      };
+
                       // retreive pixel in panorama
                       lf_Real_t  up = 0.0;
                       lf_Real_t  vp = 0.0;
@@ -256,14 +293,19 @@ bool projectPointCloud (
 
                           pointAndPixels.push_back( std::make_pair( point, pixels ) );
 
-                          ++cpt;
                       }
 
                   }
 
-              }
+              }  // end loop on point
 
-          }
+          } // end loop on channel
+
+          // export tile with depth
+          std::ostringstream ibuffName;
+          ibuffName << "z-buffer-"<< j << ".jpeg";
+
+          imwrite( ibuffName.str(), image );
 
     }
 
