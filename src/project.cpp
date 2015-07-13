@@ -145,6 +145,10 @@ bool projectPointCloud (
 
     // initialize set of point to render
     std::set < size_t >  set_point_to_render;
+    std::vector < bool >  is_point_rendered ;
+
+    for( int i = 0 ; i < pointAndColor.size(); ++i )
+        is_point_rendered.push_back( false ) ;
 
     pointAndPixels.resize( pointAndColor.size() );
 
@@ -158,20 +162,25 @@ bool projectPointCloud (
           const unsigned int  S = pow(2,32)-1;
           std::vector < std::vector < size_t > >  buffer;
           std::vector < std::vector < size_t > >  point_to_render;
+          std::vector < std::vector < unsigned char > >  color ;
 
           for( int kl=0;  kl < sd.lfWidth; ++kl )
           {
               std::vector < size_t >  temp;
               std::vector < size_t >  temp_point;
+              std::vector < unsigned char >  temp_col ;
 
               for( int  kn=0; kn < sd.lfHeight; ++kn )
               {
                   temp.push_back( S );
                   temp_point.push_back( pointAndColor.size() );
+                  temp_col.push_back( 255 );
               }
 
               point_to_render.push_back( temp_point );
               buffer.push_back( temp );
+              color.push_back( temp_col );
+
           }
 
           for( size_t i = 0 ; i < pointAndColor.size(); ++i )
@@ -208,7 +217,7 @@ bool projectPointCloud (
               lf_Real_t depth = sd.R[6] * X_C[0] + sd.R[7] * X_C[1] + sd.R[8] * X_C[2];
 
               // additionnal check on depth (to render point only in near and far plane)
-              const  lf_Real_t  near = 1.0;
+              const  lf_Real_t  near = 0.2;
               const  lf_Real_t   far = 50.0;
               lf_Real_t     zp = 2.0 * ( depth - near ) / (far - near ) - 1.0;
               lf_Real_t    zp1 = ( far + near ) / (2.0 * (far - near)) - far * near / depth / (far - near) + 0.5;
@@ -219,7 +228,7 @@ bool projectPointCloud (
               lf_Real_t  vg = -1.0;
 
               //  if depth > 0, point could be seen from camera j. Exclude point too far ( > 30.0 meter from rig)
-              if( ( zp >= -1.0 && zp <= 1.0 ) )
+              if( ( zp >= -1.0 && zp <= 1.0 ) && is_point_rendered[i] == false )
               {
                   double  PX0 = sd.P[0] * X[0] + sd.P[1] * X[1] + sd.P[2 ] * X[2] + sd.P[3 ] * X[3];
                   double  PX1 = sd.P[4] * X[0] + sd.P[5] * X[1] + sd.P[6 ] * X[2] + sd.P[7 ] * X[3];
@@ -231,11 +240,14 @@ bool projectPointCloud (
 
                   if ( ug > 0.0 && ug < sd.lfWidth && vg > 0.0 && vg < sd.lfHeight)
                   {
+                      is_point_rendered[i] = true ;
                       // create z-buffer image
                       int u0 = floor( ug );
                       int v0 = floor( vg );
 
-                      int patch_size = std::max(5, (int) floor(15.0/depth) );
+                      unsigned char pixel_color = 255 ;
+
+                      int patch_size = std::max(15, (int) floor(far/depth) );
 
                       for( int p = -patch_size ; p < patch_size+1 ; ++p )
                       {
@@ -248,6 +260,8 @@ bool projectPointCloud (
                                     // update z-buffer and point to render list
                                     buffer[u0+p][v0+q] = zbuff ;
                                     point_to_render[u0+p][v0+q] = i ;
+                                    pixel_color = floor( 255 * depth / far );
+                                    color[u0+p][v0+q] = pixel_color ;
                                 }
                               }
                           }
@@ -278,7 +292,7 @@ bool projectPointCloud (
                       );
 
                       if( up < 0.0 )
-                          up += sd.lfImageFullWidth;
+                         up += sd.lfImageFullWidth;
 
                       if( up > 0 && up < sd.lfImageFullWidth && vp > 0 && vp < sd.lfImageFullHeight )
                       {
@@ -293,6 +307,7 @@ bool projectPointCloud (
 
                           // store depth
                           pixels.push_back( scale * sqrt(xrig * xrig + yrig * yrig + zrig * zrig) );
+                          pixels.push_back( pixel_color ) ;
 
                           // store 3D coordinate of point and index of point
                           point.push_back( pos[0] + sx );
@@ -319,13 +334,13 @@ bool projectPointCloud (
                   if( point_to_render[kl][kn] != pointAndColor.size() )
                   {
                      set_point_to_render.insert( point_to_render[kl][kn] );
+                     pointAndPixels[point_to_render[kl][kn]].second[3] = color[kl][kn];
                   }
               }
           }
 
     } // end loop on channel
 
-    std::cout << "point cloud cleaning " << std::endl;
     // clean pointAndPixels lists
     std::vector<std::pair <std::vector <double>, std::vector<double> > > pointAndPixels_cleaned;
 
@@ -337,6 +352,7 @@ bool projectPointCloud (
     // export projected point cloud on the eqr image
     if( bPrint )
     {
+        sensorData sd = vec_sensorData[0];
         std::string output_image_filename=outputDirectory+"/"; // output image filename
 
         //extract image basename
@@ -354,22 +370,39 @@ bool projectPointCloud (
 
         for( size_t i = 0 ; i < pointAndPixels.size() ; ++i )
         {
+          double  x = pointAndPixels[i].second[0];
+          double  y = pointAndPixels[i].second[1];
+          unsigned int col= pointAndPixels[i].second[3];
+
           // export point on panorama (for debug purpose only)
-          for(int k = -1 ; k < 2 ; ++k)
-              for( int l = -1; l < 2 ; ++l)
+          for(int k = -10 ; k < 11; ++k)
+              for( int l = -10; l < 11; ++l)
               {
-                  const double  x = pointAndPixels[i].second[0];
-                  const double  y = pointAndPixels[i].second[1];
+                  // check that written point is in full EQR image
+                  if( x + k >= sd.lfImageFullWidth )
+                      x -= sd.lfImageFullWidth ;
+
+                  if ( x + k < 0 )
+                      x += sd.lfImageFullWidth ;
+
+                  if( y + l >= sd.lfImageFullHeight )
+                      y -= sd.lfImageFullWidth ;
+
+                  if ( y + l < 0 )
+                      y += sd.lfImageFullHeight ;
 
                   // export point on stiched panorama
-                  Vec3b color = pano_img.at<Vec3b>(Point(x + k, y + l));
-                  color.val[0] =  0;
-                  color.val[1] =  0;
-                  color.val[2] =  255;
+                  if ( x+k >= 0 && x+k < sd.lfImageFullWidth && y+l >= 0 && y+l < sd.lfImageFullHeight )
+                  {
+                      Vec3b color = pano_img.at<Vec3b>(Point(x + k, y + l));
+                      color.val[0] =  col;
+                      color.val[1] =  col;
+                      color.val[2] =  col;
 
-                  // set pixel
-                  pano_img.at<Vec3b>(Point(x + k , y + l)) = color;
-          }
+                      // set pixel
+                      pano_img.at<Vec3b>(Point(x + k , y + l)) = color;
+                  }
+              }
 
         }
 
