@@ -1,6 +1,6 @@
 ## Copyright
 
-poco2pano - Export openMVG point cloud to freepano <br />
+ply2bin - Export openMVG point cloud to freepano <br />
 This program is part of the FOXEL project <[http://foxel.ch](http://foxel.ch)>.
 
 Copyright (c) 2015 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />

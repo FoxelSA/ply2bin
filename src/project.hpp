@@ -1,5 +1,5 @@
 /*
- * poco2pano - Export openMVG point cloud to freepano
+ * project.hpp - Header file of openMVG point cloud exportation to freepano
  *
  * Copyright (c) 2015 FOXEL SA - http://foxel.ch
  * Please read <http://foxel.ch/license> for more information.
@@ -39,8 +39,8 @@
  /*! \file project.hpp
  * \author Stephane Flotron <s.flotron@foxel.ch>
  */
- /*! \mainpage poco2pano
- * \section poco2pano
+ /*! \mainpage ply2bin
+ * \section ply2bin
  *
  * Point cloud exportation to freepano
  *
@@ -50,7 +50,7 @@
  *
  * \section Copyright
  *
- * Copyright (c) 2013-2014 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />
+ * Copyright (c) 2015 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />
  * This program is part of the FOXEL project <[http://foxel.ch](http://foxel.ch)>.
  *
  * Please read the [COPYRIGHT.md](COPYRIGHT.md) file for more information.
@@ -76,9 +76,12 @@
 #include <fstream>
 #include <ctype.h>
 #include <cmath>
+#include <map>
+#include <set>
 #include <unistd.h>
 #include <string.h>
 #include <vector>
+#include <algorithm>
 #include <utility>
 #include <opencv2/calib3d/calib3d.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -88,8 +91,7 @@
 #include <opencv/highgui.h>
 #include <tools.hpp>
 #include <gnomonic-all.h>
-
-#define DEBUG 0
+#include "file_system.hpp"
 
 using namespace std;
 using namespace cv;
@@ -110,7 +112,13 @@ using namespace cv;
 * \param rigPose          4x3 matrix containing Rotation (first 3X3 block) and translation (line 4)
 * \param alignedPose      4x3 matrix containing Rotation (first 3X3 block) and translation (line 4) that aligne point cloud in MN95
 * \param scale            scale factor used in alignment transformation
+* \param transformation   additional transformation of the point cloud.
+* \param sx               shift on the x-coordinate in order to retrieve the true aligned coordinates
+* \param sy               shift on the y-coordinate in order to retrieve the true aligned coordinates
+* \param sz               shift on the z-coordinate in order to retrieve the true aligned coordinates
 * \param vec_sensorData   Calibration information for each sensor
+* \param panoPath         The complete path of the EQR panorama
+* \param outputDirectory  The output directory where the json and the projected point cloud on EQR will be
 *
 * \return  bool value indicating if the projection was sucessfull or not
 */
@@ -121,109 +129,13 @@ bool projectPointCloud (
            const std::vector < std::vector <double> > & rigPose,
            const std::vector < std::vector <double> > & alingnedPose,
            const double & scale,
-           const std::vector < sensorData > & vec_sensorData );
+           const std::vector < std::vector <double> > & tranformation,
+           const double &sx,
+           const double &sy,
+           const double &sz,
+           const std::vector < sensorData > & vec_sensorData,
+           const std::string panoPath,
+           const std::string outputDirectory );
 
-/*********************************************************************
-*  export projected point cloud to json file
-*
-**********************************************************************/
-
-/*! \brief Export projected point cloud in a json
-*
-* Given a list of 3D point and corresponding pixels on stiched EQR panorama,
-* export theses informations to a json file.
-*
-* \param poseName         Name of the pose file. JSON export will have the same
-* \param vec_sensorData   Calibration informations
-* \param scale            Scale factor to obtain metric point cloud
-* \param pointAndPixels   List of 3D points and associated EQR pixels
-*
-* \return  Nothing
-*/
-
-void  exportToJson (  const std::string  poseFile,
-                      const std::vector < sensorData > & vec_sensorData,
-                      const double  scale,
-                      std::vector < std::pair < std::vector <double>, std::vector <double > > > pointAndPixels
-);
-
-/*********************************************************************
-*  export point cloud to json file
-*
-**********************************************************************/
-
-/*! \brief Export point cloud in ply format into json file
-*
-* Given a list of 3D point, export it to a json file.
-*
-* \param jsonName         Name of json file in c-string array
-* \param pointAndPixels   List of 3D points and associated EQR pixels
-*
-* \return  Nothing
-*/
-
-void  pointCloudToJson ( const char * jsonName,
-                         std::vector < std::pair < std::vector <double>, std::vector <unsigned int> > > pointAndColor
-);
-
-
-/*********************************************************************
-*  load calibration data related to elphel cameras
-*
-**********************************************************************/
-
-/*! \brief Load calibration information
-*
-* Given a mac address and a mount point, load all information needed to do
-* the point cloud projection on the panorama.
-*
-* \param vec_sensorData   Array used to store the sensor calibration information.
-* \param sMountPoint      Camera folder mount point
-* \param smacAddress      Elphel camera's mac address
-*
-* \return  bool value telling if the loading was sucessfull or not.
-*/
-
-bool  loadCalibrationData(std::vector < sensorData > & vec_sensorData,
-                          const std::string & sMountPoint,
-                          const std::string & smacAddress);
-
-/*********************************************************************
-*  load point cloud
-*
-**********************************************************************/
-
-/*! \brief Ply reader
-*
-* Given a point cloud in ply format, read the file and store the corresponding
-* 3D points in a vector of pair < position, color >
-*
-* \param vec_sensorData   Array used to store the sensor calibration information.
-*
-* \return  bool value telling if the loading was sucessfull or not.
-*/
-
-bool loadPointCloud ( char * fileName ,
-                      vector< std::pair < vector <double >, vector<unsigned int> > > & pointAndColor
-);
-
-/*********************************************************************
-*  load rig pose
-*
-**********************************************************************/
-
-/*! \brief Pose file parser
-*
-* Given a rig pose file generated by openMVG, read it and store the information
-* in an array of double.
-*
-* \param  fileName   rig pose filename
-* \param  rigPose    The loaded rig pose
-*
-* \return  bool value telling if the loading was sucessfull or not.
-*/
-
-bool  loadRigPose ( const std::string & fileName,
-                    vector< std::vector<double> > & rigPose );
 
 #endif /* PROJECT_HPP_ */

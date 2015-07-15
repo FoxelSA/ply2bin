@@ -1,5 +1,5 @@
 /*
- * poco2pano - Export openMVG point cloud to freepano
+ * ply2bin - Export openMVG point cloud to freepano
  *
  * Copyright (c) 2015 FOXEL SA - http://foxel.ch
  * Please read <http://foxel.ch/license> for more information.
@@ -39,34 +39,6 @@
  /*! \file tools.hpp
  * \author Stephane Flotron <s.flotron@foxel.ch>
  */
- /*! \mainpage poco2pano
- * \section poco2pano
- *
- * Point cloud exportation to freepano
- *
- * \section Documentation
- *
- * Documentation can be consulted on the [wiki](https://github.com/baritone/poco2pano/wiki).
- *
- * \section Copyright
- *
- * Copyright (c) 2013-2014 FOXEL SA - [http://foxel.ch](http://foxel.ch)<br />
- * This program is part of the FOXEL project <[http://foxel.ch](http://foxel.ch)>.
- *
- * Please read the [COPYRIGHT.md](COPYRIGHT.md) file for more information.
- *
- * \section License
- *
- * This program is licensed under the terms of the
- * [GNU Affero General Public License v3](http://www.gnu.org/licenses/agpl.html)
- * (GNU AGPL), with two additional terms. The content is licensed under the terms
- * of the [Creative Commons Attribution-ShareAlike 4.0 International](http://creativecommons.org/licenses/by-sa/4.0/)
- * (CC BY-SA) license.
- *
- * You must read <[http://foxel.ch/license](http://foxel.ch/license)> for more
- *information about our Licensing terms and our Usage and Attribution guidelines.
- *
- */
 
  #ifndef TOOLS_HPP_
  #define TOOLS_HPP_
@@ -74,9 +46,35 @@
  #include <fastcal-all.h>
  #include <string>
  #include <cmath>
+ #include <vector>
  #include <iostream>
 
  using namespace std;
+
+ /*********************************************************************
+ * Split an input string with a delimiter and fill a string vector
+ *
+ *********************************************************************
+ */
+ static bool split ( const std::string src, const std::string& delim, std::vector<std::string>& vec_value )
+ {
+     bool bDelimiterExist = false;
+     if ( !delim.empty() )
+     {
+         vec_value.clear();
+         std::string::size_type start = 0;
+         std::string::size_type end = std::string::npos -1;
+         while ( end != std::string::npos )
+         {
+             end = src.find ( delim, start );
+             vec_value.push_back ( src.substr ( start, end - start ) );
+             start = end + delim.size();
+         }
+         if ( vec_value.size() >= 2 )
+             bDelimiterExist = true;
+     }
+     return bDelimiterExist;
+ }
 
 
 /******************************************************************************
@@ -182,7 +180,7 @@ struct sensorData
  *
  ********************************************************************************
  */
- 
+
  /*! \brief Compute projection matrix
  *
  * Given focal, px0, py0, R and optical center C, compute projection matrix

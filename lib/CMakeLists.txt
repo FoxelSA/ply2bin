@@ -35,21 +35,4 @@
 # You are required to attribute the work as explained in the "Usage and
 # Attribution" section of <http://foxel.ch/license>.
 #
-# ==============================================================================
-# Build ply2bin executable
-# ==============================================================================
-add_executable(ply2bin
-                  ply2bin.cpp
-                  project.cpp
-                  tools.cpp
-                  input_output.cpp )
-
-add_dependencies(ply2bin libgnomonic libfastcal stlplus)
-
-target_link_libraries(ply2bin
-  ${PLY2BIN_LIBRARY_LIST}
-)
-
-set_target_properties( ply2bin PROPERTIES RUNTIME_OUTPUT_DIRECTORY .. )
-
-install(TARGETS ply2bin DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+add_subdirectory(stlplus3)
