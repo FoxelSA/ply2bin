@@ -1,8 +1,8 @@
 
-## poco2pano <br /> Point cloud exportation to freepano
+## ply2bin <br /> Point cloud exportation to DAV
 
 Given an openMVG point cloud in ply format obtained with eyesis4pi rig structure,
-this software export it on the associtated EQR panoramas.
+this software export it in binary file format readable for DAV.
 
 ### Documentation
 
