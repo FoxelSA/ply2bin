@@ -46,7 +46,7 @@
  *
  * \section Documentation
  *
- * Documentation can be consulted on the [wiki](https://github.com/baritone/poco2pano/wiki).
+ * Documentation can be consulted on the [wiki](https://github.com/FoxelSA/ply2bin/wiki).
  *
  * \section Copyright
  *
