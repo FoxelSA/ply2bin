@@ -6,7 +6,7 @@ this software export it in binary file format readable for DAV.
 
 ### Documentation
 
-More information can be found on the [wiki](https://github.com/baritone/poco2pano/wiki).
+More information can be found on the [wiki](https://github.com/FoxelSA/ply2bin/wiki).
 
 ### Copyright
 
