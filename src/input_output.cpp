@@ -71,8 +71,8 @@ bool  exportToJson (  const std::string  poseFile,
 
     // create export stream
     ofstream out;
-    out.precision( 17 );  // used fixed notation with 6 digit of precision
-    out.setf( std::ios::scientific );
+    out.precision( 6 );  // used fixed notation with 6 digit of precision
+    out.setf( std::ios::fixed );
     out.open( jsonFile.c_str(), ios::trunc ); // erease previous content
 
     if( out.is_open() )
@@ -155,10 +155,6 @@ bool  exportToBin ( const std::string  poseFile,
 
     if( out.is_open() )
     {
-        // extract panorama width in order to convert coordinate in latitude-longitude
-        const size_t ImageFullWidth = vec_sensorData[0].lfImageFullWidth;
-        const double radPerPix = LG_PI2 / (double) ImageFullWidth;
-
         // initialize sectors (following luc convention )
         std::list<uint32_t> sector[360][180];
 
@@ -181,8 +177,8 @@ bool  exportToBin ( const std::string  poseFile,
             depth =  pixels[2];
 
             // convert pixels into radian
-            theta =  pixels[0] * radPerPix;
-            phi   =  pixels[1] * radPerPix - 0.5 * LG_PI;
+            theta = atan2 ( pt[5] , pt[4] );
+            phi   = atan( pt[6] / sqrt( pt[4]*pt[4] + pt[5]*pt[5] ) );
 
             // convert angles into degrees
             longitude = ( (int) round(theta / step ) + 180 ) % 360 ;
@@ -200,12 +196,9 @@ bool  exportToBin ( const std::string  poseFile,
             sector[longitude][latitude].push_back(k);
 
             // convert panoramic pixels into cartersian webgl coordinates
-            phi   = ( phi - M_PI / 2 );
-            theta = theta - M_PI / 2;
-
-            x =  depth * sin ( phi ) * cos ( theta );
-            z =  depth * sin ( phi ) * sin ( theta );
-            y = -depth * cos ( phi );
+            x =  depth * cos ( phi ) * cos ( theta );
+            y = -depth * cos ( phi ) * sin ( theta );
+            z = -depth * sin ( phi );
 
             // update table
             eucl[ k ]     = x ;

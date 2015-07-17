@@ -314,6 +314,9 @@ bool projectPointCloud (
                           point.push_back( pos[1] + sy );
                           point.push_back( pos[2] + sz );
                           point.push_back( i );
+                          point.push_back( scale * xrig );
+                          point.push_back( scale * yrig );
+                          point.push_back( scale * zrig );
 
                           pointAndPixels[i] = std::make_pair( point, pixels );
 
