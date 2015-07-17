@@ -63,8 +63,8 @@ bool projectPointCloud (
     // extract rig rotation and center
     double  Rrig[3][3] = {
         { rigPose[0][0], rigPose[0][1], rigPose[0][2] },
-        { rigPose[1][0], rigPose[1][1], rigPose[1][2] },
-        { rigPose[2][0], rigPose[2][1], rigPose[2][2] }
+        { -rigPose[1][0], -rigPose[1][1], -rigPose[1][2] },
+        { -rigPose[2][0], -rigPose[2][1], -rigPose[2][2] }
     };
 
     vector <double> cRig = rigPose[3];
@@ -183,32 +183,51 @@ bool projectPointCloud (
 
           }
 
+          // compute alignement transformation ( i.e  T X_{webGL} = scale * R_x(\pi) * R_rig ( R_corr^T { [R_aligned^T X_{mn95} + (C_a -MN95_{shift}) ] / scale - t_corr } - C_rig ) )
+          // in the following computations, R_x(\pi) is integrated into R_rig
+          double  RrRcT[3][3] = {0};
+
+          for(int ix=0; ix < 3; ++ix)
+             for( int jx=0; jx<3 ; ++jx)
+                  RrRcT[ix][jx] = Rrig[ix][0] * Rcorr[jx][0] + Rrig[ix][1] * Rcorr[jx][1] + Rrig[ix][2] * Rcorr[jx][2];
+
+          // compute full rotation matrix (= R_rig * R_corr^T * R_aligned^T )
+          double   R[3][3] = {0};
+
+          for(int ix=0; ix < 3; ++ix)
+             for( int jx=0; jx<3 ; ++jx)
+                  R[ix][jx] = RrRcT[ix][0] * Ralign[jx][0] + RrRcT[ix][1] * Ralign[jx][1] + RrRcT[ix][2] * Ralign[jx][2];
+
+          // compute the 3 additionnal translation to sum
+          double   t0[3] = {0};
+          double   t1[3] = {0};
+          double   t2[3] = {0};
+          double   t[3] = {0};
+          double   Shift[3] = {0};
+
+          for( int ix=0; ix < 3 ; ++ix )
+          {
+              t0[ix] = RrRcT[ix][0] * ( cA[0] -sx ) + RrRcT[ix][1] * ( cA[1] -sy ) + RrRcT[ix][2] * ( cA[2] -sz );
+              t1[ix] = -scale * ( RrRcT[ix][0] * tCorr[0] + RrRcT[ix][1] * tCorr[1] + RrRcT[ix][2] * tCorr[2] );
+              t2[ix] = -scale * ( Rrig[ix][0] * cRig[0] + Rrig[ix][1] * cRig[1] + Rrig[ix][2] * cRig[2] );
+
+              // sum all translation in order to get the full one
+              t[ix] = t0[ix] + t1[ix] + t2[ix];
+
+              // need an extra translation term since the input point cloud is shifted and the above transformation assume that the aligned point cloud is not shifted
+              Shift[ix] = RrRcT[ix][0] * sx + RrRcT[ix][1] * sy + RrRcT[ix][2] * sz;
+          }
+
           for( size_t i = 0 ; i < pointAndColor.size(); ++i )
           {
               // retrieve point information
               vector <double> pos   = pointAndColor[i].first;
               double xrig, yrig, zrig;
 
-              double  xcentered[3];
-
-              xcentered[0] = pos[0];
-              xcentered[1] = pos[1];
-              xcentered[2] = pos[2];
-
-              // undo rotation and scaling that aligned point cloud
-              double x_pc = ( Ralign[0][0] * xcentered[0] + Ralign[1][0] * xcentered[1] + Ralign[2][0] *  xcentered[2] + cA[0]) / scale;
-              double y_pc = ( Ralign[0][1] * xcentered[0] + Ralign[1][1] * xcentered[1] + Ralign[2][1] *  xcentered[2] + cA[1]) / scale;
-              double z_pc = ( Ralign[0][2] * xcentered[0] + Ralign[1][2] * xcentered[1] + Ralign[2][2] *  xcentered[2] + cA[2]) / scale;
-
-              // undo rotation and scaling that move point cloud
-              double x_tmp = Rcorr[0][0] * ( x_pc -tCorr[0])  + Rcorr[1][0] * ( y_pc -tCorr[1]) + Rcorr[2][0] *  ( z_pc -tCorr[2]) ;
-              double y_tmp = Rcorr[0][1] * ( x_pc -tCorr[0])  + Rcorr[1][1] * ( y_pc -tCorr[1]) + Rcorr[2][1] *  ( z_pc -tCorr[2]) ;
-              double z_tmp = Rcorr[0][2] * ( x_pc -tCorr[0])  + Rcorr[1][2] * ( y_pc -tCorr[1]) + Rcorr[2][2] *  ( z_pc -tCorr[2]) ;
-
-              // convert point cloud into rig referential, i.e. x_rig = R_rig ( x - C_rig )
-              xrig = Rrig[0][0] * (x_tmp -cRig[0]) + Rrig[0][1] * (y_tmp - cRig[1]) + Rrig[0][2] * ( z_tmp - cRig[2] ) ;
-              yrig = Rrig[1][0] * (x_tmp -cRig[0]) + Rrig[1][1] * (y_tmp - cRig[1]) + Rrig[1][2] * ( z_tmp - cRig[2] ) ;
-              zrig = Rrig[2][0] * (x_tmp -cRig[0]) + Rrig[2][1] * (y_tmp - cRig[1]) + Rrig[2][2] * ( z_tmp - cRig[2] ) ;
+              // convert point cloud into rig referential, i.e. x_rig = R_x(\pi)^T * ( R * x_aligned  + t ) / scale ;
+              xrig =  ( R[0][0] * pos[0] + R[0][1] * pos[1] + R[0][2] * pos[2] + t[0] + Shift[0] ) / scale ;
+              yrig = -( R[1][0] * pos[0] + R[1][1] * pos[1] + R[1][2] * pos[2] + t[1] + Shift[1] ) / scale ;
+              zrig = -( R[2][0] * pos[0] + R[2][1] * pos[1] + R[2][2] * pos[2] + t[2] + Shift[2] ) / scale ;
 
               const lf_Real_t  X[4] = { xrig, yrig, zrig, 1.0 };
 
