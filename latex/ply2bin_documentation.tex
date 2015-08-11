@@ -1,0 +1,67 @@
+\documentclass[a4paper, 11pt]{article}
+
+%\usepackage{../preambule}
+\usepackage[latin1]{inputenc}
+\usepackage[french]{babel}
+\usepackage{amsmath}
+%\usepackage{bbm}
+\usepackage{lscape}
+\usepackage{inputenc}
+%\usepackage[refpage,french,noprefix]{nomencl}
+\usepackage{lmodern}
+\usepackage{url}
+\usepackage{float, graphicx}
+\usepackage[sectionbib]{chapterbib}
+
+\author{ St\'ephane Flotron }
+\title{\textbf{ply2bin documentation}}
+
+\renewcommand{\tilde}{\widetilde}
+\renewcommand{\t}{\mathbf{t}}
+
+\begin{document}
+   \maketitle
+   
+   \section*{Program description}
+   
+   The ply2bin software is a program which convert a point cloud in PLY file format into 
+   a binary file readable for the DAV interface. 
+   The keypoint of this sofware is to transform the (aligned) point cloud into the WebGL
+   interface associated to the panorama.
+   
+   \section*{Mathematics}
+   
+   Suppose that we have an aligned point cloud in CH1903+ referential, and that we want to transform the points into
+   the WebGL interface. In order to simplify the reading, let us introduce some notations.
+   
+   \begin{tabular}{cc}
+        
+   \end{tabular}
+   
+   \begin{equation}
+       \begin{aligned}
+           & X_{wgl} & = & \frac{1}{s} R_x(\pi) R_r R_2^T R_a^T X_{CH1903} + \frac{1}{s} R_x(\pi) R_r R_2^T [C_a -S] \\
+            &&&       -R_x(\pi) R_r R_2^T \t_2 - R_x(\pi) R_r C_r.
+       \end{aligned}
+   \end{equation} 
+   
+   Let us define $\overline X $ as the 3D you need for projection onto panorama, and $\tilde X$ the 3D point you need 
+   for measurments. Then 
+   \begin{equation}
+        \begin{aligned}
+        \overline X & = && R_x(\pi) X_{wgl} \\
+        \tilde X & = && s X_{wgl}
+        \end{aligned}
+   \end{equation}
+   which is equivalent to 
+      \begin{equation}
+        \begin{aligned}
+        \overline X & = && \frac{1}{s} R_r R_2^T R_a^T X_{CH1903} + \frac{1}{s} R_r R_2^T [C_a -S] -R_r R_2^T \t_2 - R_r C_r. \\
+        \tilde X & = && R_x(\pi) R_r R_2^T R_a^T X_{CH1903} + R_x(\pi) R_r R_2^T [C_a -S] \\
+            &&&       -s R_x(\pi) R_r R_2^T \t_2 - s R_x(\pi) R_r C_r.
+        \end{aligned}
+   \end{equation}
+
+
+
+\end{document}
