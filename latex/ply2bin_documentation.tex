@@ -1,5 +1,11 @@
 \documentclass[a4paper, 11pt]{article}
 
+%========================================================================
+%
+%       Packages inclusion
+%
+% =======================================================================
+
 %\usepackage{../preambule}
 \usepackage[latin1]{inputenc}
 \usepackage[french]{babel}
@@ -16,10 +22,17 @@
 \author{ St\'ephane Flotron }
 \title{\textbf{ply2bin documentation}}
 
+% definition of useful command for the document
 \renewcommand{\tilde}{\widetilde}
 \renewcommand{\t}{\mathbf{t}}
 
+%========================================================================
+%
+%       Document 
+%
+% =======================================================================
 \begin{document}
+
    \maketitle
    
    \section*{Program description}
@@ -32,11 +45,32 @@
    \section*{Mathematics}
    
    Suppose that we have an aligned point cloud in CH1903+ referential, and that we want to transform the points into
-   the WebGL interface. In order to simplify the reading, let us introduce some notations.
+   the WebGL interface. In order to simplify the reading, let us introduce some notations. 
    
-   \begin{tabular}{cc}
-        
-   \end{tabular}
+   \begin{table}[H]
+      \begin{center}
+        \begin{tabular}{|c|l|}
+                \hline 
+                    3D point notation & description \\
+                \hline
+                    $X_{CH1903}$ & 3D point in MN95 referential frame \\
+                    $X_{abs}$ & 3D point in SfM referential frame \\
+                    $X_{tra}$ & 3D point in rigidly transformed SfM referential frame \\
+                    $X_r$     & 3D point in pose referential frame \\
+                \hline
+        \end{tabular}
+      \end{center}
+      \label{3D point notation}
+      \caption{Notions for 3D points in different referential frames}
+   \end{table}
+   
+   The notation define above are related to each other with the following relations :
+   \begin{equation}
+       X_{CH1903}  = s R_a ( X_{trans} - C_a ) + S \Leftrightarrow X_{trans} = \frac{1}{s} R_a^T ( X_{CH1903} -S ) + C_a
+   \end{equation}
+   where $s$ is the scale factor used to retreive metric coordinates, $R_a$ is the rotation matrix used to align
+   point cloud, $C_a$ is the center of rotation in CH1903+ referential frame and $S$ is a shift to have a precise
+   point cloud rendering.
    
    \begin{equation}
        \begin{aligned}
