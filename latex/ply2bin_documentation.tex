@@ -54,6 +54,7 @@
                     3D point notation & description \\
                 \hline
                     $X_{CH1903}$ & 3D point in MN95 referential frame \\
+                    $X_S$     & 3D point in shifted MN95 referential frame \\
                     $X_{abs}$ & 3D point in SfM referential frame \\
                     $X_{tra}$ & 3D point in rigidly transformed SfM referential frame \\
                     $X_r$     & 3D point in pose referential frame \\
@@ -70,11 +71,15 @@
    \end{equation}
    where $s$ is the scale factor used to retreive metric coordinates, $R_a$ is the rotation matrix used to align
    point cloud, $C_a$ is the center of rotation in CH1903+ referential frame and $S$ is a shift to have a precise
-   point cloud rendering.
+   point cloud rendering. However, the store point cloud is ofter $X_{CH1903}-S$, so the above transformation become
+      \begin{equation}
+       X_{S}  = s R_a ( X_{trans} - C_a ) \Leftrightarrow X_{trans} = \frac{1}{s} R_a^T ( X_{S} + C_a )
+   \end{equation}
+   and we only need to take $S$ into account for exportation of true CH1903 coordinates (and not for the projection part).
    
    \begin{equation}
        \begin{aligned}
-           & X_{wgl} & = & \frac{1}{s} R_x(\pi) R_r R_2^T R_a^T X_{CH1903} + \frac{1}{s} R_x(\pi) R_r R_2^T [C_a -S] \\
+           & X_{wgl} & = & \frac{1}{s} R_x(\pi) R_r R_2^T R_a^T X_S + \frac{1}{s} R_x(\pi) R_r R_2^T C_a \\
             &&&       -R_x(\pi) R_r R_2^T \t_2 - R_x(\pi) R_r C_r.
        \end{aligned}
    \end{equation} 
@@ -90,8 +95,8 @@
    which is equivalent to 
       \begin{equation}
         \begin{aligned}
-        \overline X & = && \frac{1}{s} R_r R_2^T R_a^T X_{CH1903} + \frac{1}{s} R_r R_2^T [C_a -S] -R_r R_2^T \t_2 - R_r C_r. \\
-        \tilde X & = && R_x(\pi) R_r R_2^T R_a^T X_{CH1903} + R_x(\pi) R_r R_2^T [C_a -S] \\
+        \overline X & = && \frac{1}{s} R_r R_2^T R_a^T X_S + \frac{1}{s} R_r R_2^T C_a -R_r R_2^T \t_2 - R_r C_r. \\
+        \tilde X & = && R_x(\pi) R_r R_2^T R_a^T X_S + R_x(\pi) R_r R_2^T C_a \\
             &&&       -s R_x(\pi) R_r R_2^T \t_2 - s R_x(\pi) R_r C_r.
         \end{aligned}
    \end{equation}
