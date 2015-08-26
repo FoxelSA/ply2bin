@@ -57,7 +57,7 @@
                     $X_S$       & 3D point in shifted MN95 referential frame \\
                     $X_{omvg}$   & 3D point in openMVG referential frame \\
                     $X_{trans}$ & 3D point in rigidly transformed openMVG referential frame \\
-                    $X_r$       & 3D point in rig referential frame \\
+                    $X_r$       & 3D point in pose referential frame \\
                     $X_c$       & 3D point in camera referential frame \\
                     $X_{pix}$   & 3D point in camera pixel coordinate frame \\
                 \hline
@@ -73,7 +73,7 @@
    \begin{equation}
        X_{CH1903}  = s R_a ( X_{trans} - C_a ) + S \Leftrightarrow X_{trans} = \frac{1}{s} R_a^T ( X_{CH1903} -S ) + C_a
    \end{equation}
-   where $s$ is the scale factor used to retreive metric coordinates, $R_a$ is the rotation matrix used to align
+   where $s$ is the scale factor used to retrieve metric coordinates, $R_a$ is the rotation matrix used to align
    point cloud, $C_a$ is the center of rotation in CH1903+ referential frame and $S$ is a shift to have a precise
    point cloud rendering. However, the store point cloud is ofter $X_{CH1903}-S$, so the above transformation become
    \begin{equation}
@@ -87,7 +87,7 @@
    \end{equation}
    where $R_2$ is a rotation matrix and $\t_2$ is a translation. Generally, no transformation is applied on the point
    cloud, so if not provided, the default value of $R_2$ and $\t_2$ are $I_3$ and $0$ respectively. 
-   Finally, the coordinates of the 3D point $X_{omvg}$ in the pose referential frame is given by
+   Finally, the coordinates $X_r$ in the pose referential frame of the 3D point $X_{omvg}$ is given by
    \begin{equation}
        X_r = R_r (X_{omvg}-C_r).
    \end{equation}
@@ -180,14 +180,14 @@ Optionnal arguments
    For a more detailed usage of ply2bin, we refer us to the wiki page of ply2bin https://github.com/FoxelSA/ply2bin/wiki.
     
 \section*{Conclusion}
-  The sofware is perfectly working with JSON output files. During the projection step, a z-buffering method is used in order to
-  deal with occlusion. Concerning the binary output, it is working but actually, no
+  The sofware is perfectly working with JSON output files. During the projection step, a Z-buffering method is used to
+  deal with occlusions. Concerning the binary output, it is working but actually, no
   validation tests are made with this ouput. Indeed, a new output file format will soon be on the road. The key idea of the
   new file format is the following :
   \begin{enumerate}
       \item We will have a binary file containing all the 3D points in CH1903 referential frame.
       \item for each pose, we store the indices of the 3D point that are seen in this pose, as the transformation
-            from CH1903 to local coordinate frame.
+            from CH1903+ to local coordinate frame.
       \item We will make a query on the server in order to have the 3D coordinates of the pixel point seen in the panorama.
   \end{enumerate}
 
