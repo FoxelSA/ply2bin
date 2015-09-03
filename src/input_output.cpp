@@ -155,13 +155,17 @@ bool  exportToBin ( const std::string  poseFile,
 
     if( out.is_open() )
     {
+        // extract panorama width in order to convert coordinate in latitude-longitude
+        const size_t ImageFullWidth = vec_sensorData[0].lfImageFullWidth;
+        const double radPerPix = LG_PI2 / (double) ImageFullWidth;
+
         // initialize sectors (following luc convention )
         std::list<uint32_t> sector[360][180];
 
         // initialize output structure
         const double step = M_PI / 180.;
         double depth, theta, phi;
-        double x,y,z;
+        float x,y,z;
         int longitude, latitude;
 
         double *mn95=new double[pointAndPixels.size()*3];
@@ -179,10 +183,12 @@ bool  exportToBin ( const std::string  poseFile,
             // convert pixels into radian
             theta = atan2 ( pt[5] , pt[4] );
             phi   = atan( pt[6] / sqrt( pt[4]*pt[4] + pt[5]*pt[5] ) );
+            double theta_2  = pixels[0] * radPerPix;
+            double phi_2    = pixels[1] * radPerPix - 0.5 * LG_PI;
 
             // convert angles into degrees
-            longitude = ( (int) round(theta / step ) + 180 ) % 360 ;
-            latitude  = round( phi / step );
+            longitude = ( (int) round(theta_2 / step ) + 180 ) % 360 ;
+            latitude  = round( phi_2 / step );
 
             // keep only positive latitude
             if( latitude < 0 )
