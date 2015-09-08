@@ -553,6 +553,20 @@ bool loadPointCloud ( const char * fileName ,   vector< std::pair < vector <doub
         std::vector < string > splitted_line;
         split(line, " ", splitted_line);
 
+        // remove empty strings
+        std::vector < string >  splitted_without_empty;
+        for( size_t i = 0 ; i < splitted_line.size(); ++i )
+        {
+          if( !splitted_line[i].empty() )
+            splitted_without_empty.push_back( splitted_line[i] );
+        }
+
+        splitted_line.swap( splitted_without_empty );
+
+        // if tabular is empty, go ahead
+        if(splitted_line.empty() )
+          continue ;
+
         if( splitted_line.size() >= 3 )
         {
             if(splitted_line[0] == "element" && splitted_line[1] =="vertex")
